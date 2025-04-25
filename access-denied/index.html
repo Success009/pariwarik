@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hotel Pariwarik - Access Denied</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #8b5d33;
+            --secondary: #d4b996;
+            --dark: #222;
+            --light: #f5f5f5;
+            --danger: #b53737;
+            --success: #2e7d32;
+            --font-size-base: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            font-size: var(--font-size-base);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+            background-size: 400% 400%;
+            animation: bgShift 15s ease infinite;
+            overflow: hidden;
+            position: relative;
+            padding: 1rem;
+            touch-action: manipulation;
+        }
+
+        /* Safari height fix */
+        html {
+            height: -webkit-fill-available;
+        }
+
+        @keyframes bgShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes glowPulse {
+            0% { opacity: 0.2; }
+            50% { opacity: 0.4; }
+            100% { opacity: 0.2; }
+        }
+
+        .background-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(var(--secondary) 1px, transparent 1px),
+                radial-gradient(var(--secondary) 1px, transparent 1px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+            opacity: 0.08;
+            z-index: -1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            padding: 2rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(139, 93, 51, 0.2);
+            animation: fadeIn 0.8s ease-in-out;
+        }
+
+        .logo-container {
+            margin-bottom: 1.5rem;
+            animation: float 5s ease-in-out infinite;
+        }
+
+        .logo {
+            max-width: 300px;
+            width: 80%;
+            height: auto;
+        }
+
+        .icon-box {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .lock-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            animation: pulse 3s infinite;
+        }
+
+        .access-denied {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--danger);
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .message {
+            font-size: 1.1rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 500;
+        }
+
+        .alternative {
+            margin-top: 1.5rem;
+            padding: 1.2rem;
+            border-radius: 12px;
+            background-color: rgba(46, 125, 50, 0.1);
+            border: 1px dashed var(--success);
+        }
+
+        .alternative-title {
+            color: var(--success);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .alternative-message {
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        /* Visual elements */
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(145deg, var(--secondary), var(--primary));
+            opacity: 0.08;
+            z-index: -1;
+        }
+
+        .circle-1 {
+            width: 180px;
+            height: 180px;
+            top: -90px;
+            left: -90px;
+        }
+
+        .circle-2 {
+            width: 140px;
+            height: 140px;
+            bottom: -70px;
+            right: -70px;
+        }
+
+        .glow {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(212, 185, 150, 0.3), transparent 70%);
+            z-index: -1;
+            animation: glowPulse 4s infinite;
+        }
+
+        /* Border animation */
+        .border-animation {
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            border: 1px solid var(--primary);
+            border-radius: 20px;
+            opacity: 0;
+            animation: pulse 3s infinite;
+        }
+
+        /* Floating particles for mobile */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background-color: var(--secondary);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            opacity: 0.2;
+            animation-name: particleMove;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+        }
+
+        @keyframes particleMove {
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-800px) translateX(50px);
+                opacity: 0;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            display: none;
+            margin: 1rem auto;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(139, 93, 51, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Button styling */
+        .btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(139, 93, 51, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+            text-decoration: none;
+            position: relative;
+            z-index: 5; /* Increase button z-index */
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 5px rgba(139, 93, 51, 0.3);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+        }
+
+        .btn-success:active {
+            box-shadow: 0 2px 5px rgba(46, 125, 50, 0.3);
+        }
+
+        /* Prevent text selection */
+        body, .container, .message, .access-denied {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        /* Food icon styling */
+        .food-icon {
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-pattern"></div>
+    <div class="particles" id="particles"></div>
+
+    <div class="container" id="container">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+        <div class="glow"></div>
+        <div class="border-animation"></div>
+        
+        <div class="logo-container">
+            <img src="logopar.png" alt="Hotel Pariwarik Logo" class="logo">
+        </div>
+        
+        <div class="icon-box">
+            <i class="fas fa-lock lock-icon"></i>
+        </div>
+        
+        <h1 class="access-denied">Access Denied</h1>
+        
+        <p class="message">The menu is only available when you are in our hotel.</p>
+        
+        <div class="alternative">
+            <h2 class="alternative-title"><i class="fas fa-utensils food-icon"></i>Home Delivery Available!</h2>
+            <p class="alternative-message">Sorry for the inconvenience. For food delivery to your home, please visit our partner service Bharatpur Bazar.</p>
+            <a href="https://bharatpurbazar.shop/" class="btn btn-success">
+                <i class="fas fa-external-link-alt"></i> Order from Bharatpur Bazar
+            </a>
+        </div>
+        
+        <div class="loading" id="loading"></div>
+        <button class="btn" id="retry-btn">Try Hotel Access Again</button>
+    </div>
+
+    <script>
+        // Optimized for mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check IP on load
+            checkNetworkStatus();
+            
+            // Add listeners - removing touchstart to prevent conflicts
+            document.getElementById('retry-btn').addEventListener('click', handleRetry);
+            
+            // Create particles - fewer for mobile
+            createParticles(15);
+        });
+
+        // Check if on hotel network
+        function checkNetworkStatus() {
+            fetch("https://api.ipify.org?format=json")
+                .then(res => res.json())
+                .then(data => {
+                    console.log("Detected IP:", data.ip);
+                    const allowedIP = "103.166.101.149";
+                    if (data.ip === allowedIP) {
+                        window.location.href = "hotel-menu.html";
+                    }
+                })
+                .catch(() => {
+                    console.log("IP check failed");
+                });
+        }
+
+        // Handle retry button
+        function handleRetry(e) {
+            e.preventDefault();
+            const loading = document.getElementById('loading');
+            const retryBtn = document.getElementById('retry-btn');
+            
+            loading.style.display = 'block';
+            retryBtn.style.display = 'none';
+            
+            // Vibrate if supported (mobile feedback)
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+            
+            setTimeout(() => {
+                checkNetworkStatus();
+                
+                // Reset after check
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                    retryBtn.style.display = 'inline-block';
+                }, 1000);
+            }, 1000);
+        }
+
+        // Create fewer particles for mobile
+        function createParticles(count) {
+            const particlesContainer = document.getElementById('particles');
+            
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('span');
+                particle.className = 'particle';
+                
+                // Random position
+                const posX = Math.random() * window.innerWidth;
+                const posY = Math.random() * window.innerHeight + window.innerHeight;
+                
+                // Random size - smaller for mobile
+                const size = Math.floor(Math.random() * 3) + 2;
+                
+                // Random animation duration
+                const duration = Math.random() * 20 + 15;
+                
+                // Random delay
+                const delay = Math.random() * 10;
+                
+                particle.style.left = posX + 'px';
+                particle.style.top = posY + 'px';
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.animationDuration = duration + 's';
+                particle.style.animationDelay = delay + 's';
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+        
+        // Adjust layout on orientation change
+        window.addEventListener('orientationchange', function() {
+            const particlesContainer = document.getElementById('particles');
+            particlesContainer.innerHTML = '';
+            createParticles(15);
+        });
+        
+        // Prevent zooming for better mobile experience but allow scrolling
+        document.addEventListener('touchmove', function(e) {
+            if (e.scale !== 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>

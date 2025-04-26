@@ -841,7 +841,7 @@
             });
             const now = new Date();
             const timestamp = now.toISOString();
-            let deviceId = "A1"
+            const deviceId = localStorage.getItem('deviceId');
             let totalPrice = parseFloat(document.getElementById('totalPrice').lastElementChild.innerText.replace('Rs ', ''));
             if (isNaN(totalPrice)) totalPrice = 0;
             const finalPrice = totalPrice

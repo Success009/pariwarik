@@ -376,7 +376,7 @@
                 .then(res => res.json())
                 .then(data => {
                     console.log("Detected IP:", data.ip);
-                    const allowedIP = "103.166.101.146";
+                    const allowedIP = "103.166.101.155";
                     if (data.ip === allowedIP) {
                         window.location.href = "http://pariwarik.undo.it/main";
                     }

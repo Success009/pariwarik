@@ -1000,7 +1000,6 @@ document.getElementById('searchInput').addEventListener('keydown', function (eve
                          .then(data => {
                              console.log("Detected IP:", data.ip);
                              const allowedIP = "103.166.101.146";
-
                              if (data.ip !== allowedIP) {
                                  window.location.href = "https://pariwarik.undo.it/access-denied";
                              } else {

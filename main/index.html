@@ -993,24 +993,26 @@ document.getElementById('searchInput').addEventListener('keydown', function (eve
         fetchMenuItems();
     </script>
     <script>
-             document.addEventListener('DOMContentLoaded', function(){
-                 setTimeout(function() {
-                     fetch("https://api.ipify.org?format=json")
-                         .then(res => res.json())
-                         .then(data => {
-                             console.log("Detected IP:", data.ip);
-                             const allowedIP = "103.166.101.146";
-                             if (data.ip !== allowedIP) {
-                                 window.location.href = "https://pariwarik.undo.it/access-denied";
-                             } else {
-                                 document.getElementById('loading').style.display = 'none';
-                             }
-                         })
-                         .catch(() => {
-                             window.location.href = "https://pariwarik.undo.it/access-denied";
-                         });
-                 }, 1000);
-             });
-         </script>
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Optional delay
+        const response = await fetch("https://api.ipify.org?format=json");
+        const data = await response.json();
+        console.log("Detected IP:", data.ip);
+
+        const allowedIP = "103.166.101.146";
+        if (data.ip !== allowedIP) {
+            window.location.href = "https://pariwarik.undo.it/access-denied";
+        } else {
+            const loadingElement = document.getElementById('loading');
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        window.location.href = "https://pariwarik.undo.it/access-denied";
+    }
+});
+</script>
 </body>
 </html>

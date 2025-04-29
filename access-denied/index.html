@@ -358,60 +358,21 @@
     </div>
 
     <script>
-        // Optimized for mobile
         document.addEventListener('DOMContentLoaded', function() {
-            // Check IP on load
-            checkNetworkStatus();
-            
-            // Add listeners - removing touchstart to prevent conflicts
             document.getElementById('retry-btn').addEventListener('click', handleRetry);
-            
-            // Create particles - fewer for mobile
             createParticles(15);
         });
-
-        // Check if on hotel network
-        function checkNetworkStatus() {
-            fetch("https://api.ipify.org?format=json")
-                .then(res => res.json())
-                .then(data => {
-                    console.log("Detected IP:", data.ip);
-                    const allowedIP = "103.166.101.140";
-                    if (data.ip === allowedIP) {
-                        window.location.href = "http://pariwarik.undo.it/main";
-                    }
-                })
-                .catch(() => {
-                    console.log("IP check failed");
-                });
-        }
-
-        // Handle retry button
         function handleRetry(e) {
             e.preventDefault();
             const loading = document.getElementById('loading');
             const retryBtn = document.getElementById('retry-btn');
-            
             loading.style.display = 'block';
             retryBtn.style.display = 'none';
-            
-            // Vibrate if supported (mobile feedback)
-            if (navigator.vibrate) {
-                navigator.vibrate(50);
-            }
-            
+            if (navigator.vibrate) navigator.vibrate(50);
             setTimeout(() => {
-                checkNetworkStatus();
-                
-                // Reset after check
-                setTimeout(() => {
-                    loading.style.display = 'none';
-                    retryBtn.style.display = 'inline-block';
-                }, 1000);
+                window.location.href = "http://pariwarik.undo.it/main";
             }, 1000);
         }
-
-        // Create fewer particles for mobile
         function createParticles(count) {
             const particlesContainer = document.getElementById('particles');
             

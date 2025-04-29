@@ -995,19 +995,22 @@ document.getElementById('searchInput').addEventListener('keydown', function (eve
     <script>
              document.addEventListener('DOMContentLoaded', function() {
     setTimeout(function() {
-        fetch("https://api.ipify.org?format=json")
-            .then(res => res.json())
-            .then(data => {
-                console.log("Detected IP:", data.ip);
-                const allowedIP = "103.166.101.140";
-                if (data.ip !== allowedIP) {
-                    window.location.href = "https://pariwarik.undo.it/access-denied";
-                } else {
-                    document.getElementById('loading').style.display = 'none';
-                }
-            });
+        const ipRef = firebase.database().ref('allowed_ips');
+        ipRef.once('value').then(snapshot => {
+            fetch("https://api.ipify.org?format=json")
+                .then(res => res.json())
+                .then(data => {
+                    console.log("Detected IP:", data.ip);
+                    const allowedIPs = snapshot.val() || {};
+                    if (!Object.values(allowedIPs).includes(data.ip)) {
+                        window.location.href = "https://pariwarik.undo.it/access-denied";
+                    } else {
+                        document.getElementById('loading').style.display = 'none';
+                    }
+                });
+        });
     }, 1000);
 });
-         </script>
+</script>
 </body>
 </html>

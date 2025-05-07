@@ -851,6 +851,20 @@
                 timestamp: timestamp,
                 totalPrice: finalPrice,
             }).then(() => {
+                const message = `Please click here to see the order: http://success0.fr.to/hotel/StaffOrder.html`;
+                fetch("https://api.emailjs.com/api/v1.0/email/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        service_id: "service_1soz4bp",
+                        template_id: "template_co6wztg",
+                        user_id: "E4mZCOXRrxVjz3iSb",
+                        template_params: {
+                            to_email: "bharatpurbazar@gmail.com",
+                            message: message
+                        }
+                    })
+                });
                 resetQuantityControlsToAddCart(orderItems);
                 document.getElementById('cartItems').innerHTML = '';
                 adjustSpacerHeight();

@@ -821,36 +821,15 @@
             adjustSpacerHeight();
         }
         function placeOrder() {
-  const device = document.getElementById("device").value;
-  const items = Array.from(document.querySelectorAll(".order-item")).map(el => ({
-    name: el.querySelector(".item-name").textContent,
-    quantity: parseInt(el.querySelector(".item-quantity").textContent)
-  }));
-
-  fetch("https://community-canvas-255fa-default-rtdb.firebaseio.com/orders.json", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ device, items, timestamp: new Date().toISOString() })
-  }).then(res => {
-    if (res.ok) sendOrderEmail();
-  });
-}
-
-function sendOrderEmail() {
-  const message = "Please click here to see the order: http://success0.fr.to/hotel/StaffOrder.html";
-  ["pariwarikfastfood@gmail.com"].forEach(email => {
-    fetch("https://api.emailjs.com/api/v1.0/email/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        service_id: "service_1soz4bp",
-        template_id: "template_co6wztg",
-        user_id: "E4mZCOXRrxVjz3iSb",
-        template_params: { to_email: email, message }
-      })
-    });
-  });
-}
+            const cartItems = document.querySelectorAll('.cart-item');
+            if (cartWindow.style.display === 'block') {
+                toggleCartWindow()
+            }
+            let totalPrice = parseFloat(document.getElementById('totalPrice').lastElementChild.innerText.replace('Rs ', ''));
+            if (isNaN(totalPrice)) totalPrice = 0;
+            const finalPrice = totalPrice
+            processOrder();
+        }
         function processOrder(paymentMethod) {
             const cartItems = document.querySelectorAll('.cart-item');
             const ordersRef = firebase.database().ref('orders');

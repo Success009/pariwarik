@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Editor | Admin Panel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="admin-common.css">
+    <style>
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap; }
+        .search-wrapper { position: relative; flex: 1; max-width: 400px; }
+        .search-wrapper i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--gray); }
+        .search-input { width: 100%; padding: 12px 12px 12px 45px; border: 2px solid transparent; border-radius: var(--radius-md); background: var(--white); box-shadow: var(--shadow); transition: var(--transition); }
+        .search-input:focus { border-color: var(--primary); outline: none; }
+        .action-btns { display: flex; gap: 10px; }
+        
+        .category-section { margin-bottom: 3rem; }
+        .category-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e0e6ed; }
+        .category-title { font-size: 1.5rem; font-weight: 800; color: var(--dark); display: flex; align-items: center; gap: 12px; }
+        .category-title::before { content: ''; width: 4px; height: 24px; background: var(--primary); border-radius: 4px; }
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        
+        .menu-card { background: var(--white); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); transition: var(--transition); border: 1px solid rgba(0,0,0,0.02); position: relative; }
+        .menu-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .card-status { position: absolute; top: 15px; right: 15px; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; z-index: 10; }
+        .status-in { background: #d4f8e2; color: #1e7e34; }
+        .status-out { background: #fde2e2; color: #c82333; }
+        .card-body { padding: 1.5rem; }
+        .item-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--dark); }
+        .item-price { font-size: 1.25rem; font-weight: 800; color: var(--primary); margin-bottom: 1rem; }
+        .item-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.5rem; }
+        .badge { padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; background: #f0f2f5; color: var(--gray); }
+        .badge-rarity { background: #fff4e5; color: #ff9f43; }
+        .card-actions { display: flex; gap: 8px; padding-top: 1rem; border-top: 1px solid #f0f2f5; }
+        .card-actions .btn { flex: 1; padding: 10px 12px; font-size: 0.85rem; }
+        
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .modal-content { background: var(--white); width: 90%; max-width: 500px; border-radius: var(--radius-lg); padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.2); animation: modalSlide 0.3s ease-out; }
+        @keyframes modalSlide { from { transform: translateY(20px); opacity: 0; } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-header h2 { font-size: 1.5rem; font-weight: 800; }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray); }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.85rem; color: var(--gray); text-transform: uppercase; }
+        .form-control { width: 100%; padding: 12px; border: 2px solid #e0e6ed; border-radius: var(--radius-md); transition: var(--transition); }
+        .form-control:focus { border-color: var(--primary); outline: none; }
+        .hidden { display: none !important; }
+
+        @media (max-width: 600px) {
+            .card-actions { flex-direction: column; }
+            .menu-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="toolbar">
+            <div class="search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search menu items..." oninput="filterItems()">
+            </div>
+            <div class="action-btns">
+                <button class="btn btn-primary" onclick="openModal('itemModal')">
+                    <i class="fas fa-plus"></i> Add New Item
+                </button>
+            </div>
+        </div>
+
+        <div id="menuContainer">
+            <div style="text-align: center; padding: 5rem; opacity: 0.5;">
+                <i class="fas fa-circle-notch fa-spin fa-3x"></i>
+                <p style="margin-top: 1rem;">Loading your menu...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Item Modal -->
+    <div id="itemModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Menu Item</h2>
+                <button class="close-btn" onclick="closeModal('itemModal')">&times;</button>
+            </div>
+            <form id="itemForm" onsubmit="saveItem(event)">
+                <input type="hidden" id="itemId">
+                <div class="form-group">
+                    <label class="form-label">Item Name</label>
+                    <input type="text" id="itemName" class="form-control" required placeholder="e.g. Chicken Momo">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label class="form-label">Price (Rs)</label>
+                        <input type="number" id="itemPrice" class="form-control" required step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Base Quantity</label>
+                        <input type="number" id="itemStartingValue" class="form-control" required value="1" step="0.1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select id="itemCategory" class="form-control" onchange="toggleCustomCategory(this.value)"></select>
+                </div>
+                <div class="form-group hidden" id="customCategoryGroup">
+                    <label class="form-label">New Category Name</label>
+                    <input type="text" id="customCategory" class="form-control" placeholder="Enter new category name">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label class="form-label">Rarity</label>
+                        <select id="itemRarity" class="form-control">
+                            <option value="Basic">Basic</option>
+                            <option value="Premium">Premium</option>
+                            <option value="Limited Edition">Limited Edition</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Unit</label>
+                        <select id="itemUnit" class="form-control">
+                            <option value="">None (Piece/Plate)</option>
+                            <option value="KG">Kilogram (KG)</option>
+                            <option value="Liter">Liter</option>
+                            <option value="Portion">Portion</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 1rem;">
+                    <button type="button" class="btn" style="background: #eee;" onclick="closeModal('itemModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Rename Category</h2>
+                <button class="close-btn" onclick="closeModal('categoryModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Current Category: <span id="currentCatLabel" style="color: var(--primary);"></span></label>
+                <input type="text" id="newCategoryName" class="form-control" placeholder="New category name">
+            </div>
+            <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn" style="background: #eee;" onclick="closeModal('categoryModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="performCategoryRename()">Update All Items</button>
+            </div>
+        </div>
+    </div>
+
+        <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="admin-core.js"></script>
+    <script src="auth.js"></script>
+    <script src="menu.js"></script>
+    
+</body>
+</html>

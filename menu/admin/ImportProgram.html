@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management | Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="admin-common.css">
+    <style>
+        .container { max-width: 900px; }
+        .card { background-color: white; border-radius: var(--radius-lg); margin-bottom: 2rem; box-shadow: var(--shadow); overflow: hidden; border: 1px solid rgba(0,0,0,0.02); }
+        .view-toggle { display: flex; border-bottom: 1px solid #f0f2f5; }
+        .view-btn { flex: 1; padding: 16px; border: none; background-color: transparent; cursor: pointer; font-size: 0.95rem; font-weight: 700; color: var(--gray); transition: var(--transition); border-bottom: 3px solid transparent; width: auto; }
+        .view-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(67, 97, 238, 0.03); }
+        .card-body { padding: 2rem; }
+        .form-panel { display: none; } .form-panel.active { display: block; }
+        h2 { margin-bottom: 1.5rem; text-align: center; color: var(--dark); font-weight: 800; font-size: 1.5rem; }
+        .inventory-section h3 { font-size: 1.2rem; font-weight: 800; margin: 2rem 0 1rem; border-bottom: 2px solid #f0e6ed; padding-bottom: 8px; color: var(--primary-dark); display: flex; align-items: center; gap: 10px; }
+        .form-group { margin-bottom: 1.5rem; position: relative; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; color: var(--gray); }
+        .form-control { width: 100%; padding: 12px; border: 2px solid #e0e6ed; border-radius: var(--radius-md); font-size: 1rem; transition: var(--transition); }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1); }
+        
+        .suggestions-container { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e0e6ed; border-top: none; border-radius: 0 0 var(--radius-md) var(--radius-md); z-index: 100; max-height: 250px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .suggestion-header { padding: 8px 15px; font-size: 0.7rem; font-weight: 800; color: var(--gray); background-color: #f8f9fa; border-bottom: 1px solid #f0f2f5; text-transform: uppercase; }
+        .suggestion-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f0f2f5; display: flex; justify-content: space-between; align-items: center; transition: var(--transition); }
+        .suggestion-item:hover { background-color: #f0f7ff; color: var(--primary); }
+        
+        #currentStockDisplay { padding: 10px; border-radius: 8px; background: #fff4e5; border: 1px solid #ffe8cc; margin-bottom: 1.5rem; text-align: center; color: #af5b00; font-weight: 600; }
+        
+        .inventory-list { list-style-type: none; padding: 0; }
+        .list-item { padding: 1.25rem; border-radius: var(--radius-md); background: #f8faff; margin-bottom: 0.75rem; border: 1px solid #edf2f7; display: flex; flex-wrap: wrap; align-items: center; gap: 15px; transition: var(--transition); }
+        .list-item:hover { border-color: var(--primary); transform: translateX(5px); }
+        .item-info { flex-grow: 1; }
+        .item-name { font-weight: 800; font-size: 1.05rem; color: var(--dark); }
+        .item-cost { font-size: 0.75rem; font-weight: 700; color: var(--primary); background-color: rgba(67, 97, 238, 0.08); padding: 4px 10px; border-radius: 6px; margin-left: 10px; }
+        .item-sub-details { font-size: 0.8rem; color: var(--gray); margin-top: 2px; }
+        .item-stats { display: flex; gap: 20px; flex-shrink: 0; }
+        .inventory-stat { text-align: center; font-size: 0.75rem; color: var(--gray); font-weight: 600; }
+        .inventory-stat span { display: block; font-weight: 800; font-size: 1.1rem; color: var(--dark); margin-top: 2px; }
+        .inventory-stat .remaining { color: var(--success); }
+        
+        .input-group { display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="view-toggle">
+                <button class="view-btn active" onclick="setView('add')"><i class="fas fa-plus-circle"></i> Add Inventory</button>
+                <button class="view-btn" onclick="setView('usage')"><i class="fas fa-minus-circle"></i> Record Usage</button>
+            </div>
+            <div class="card-body">
+                <div id="addPanel" class="form-panel active">
+                    <h2>Add Stock</h2>
+                    <form id="addForm">
+                        <input type="hidden" id="selectedItemKey_add">
+                        <input type="hidden" id="selectedItemType_add">
+                        <div class="form-group">
+                            <label class="form-label" for="itemName_add">Item Search</label>
+                            <input type="text" id="itemName_add" class="form-control" placeholder="Search menu item or type new material..." required autocomplete="off">
+                            <div id="suggestions_add" class="suggestions-container"></div>
+                        </div>
+                        <div id="rawMaterialFields">
+                            <div class="form-group">
+                                <label class="form-label" for="itemType">Category/Type</label>
+                                <input type="text" id="itemType" class="form-control" placeholder="e.g. Vegetables, Drinks">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="totalPrice">Total Cost (Rs)</label>
+                                <input type="number" id="totalPrice" class="form-control" placeholder="0.00" step="any">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Quantity & Unit</label>
+                            <div class="input-group">
+                                <input type="number" id="itemQuantity_add" class="form-control" placeholder="Qty" required step="any" style="flex:2;">
+                                <select id="itemUnit" class="form-control" style="flex:1;">
+                                    <option value="kg">KG</option>
+                                    <option value="Liter">Liter</option>
+                                    <option value="piece">Piece</option>
+                                    <option value="packet">Packet</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%"><i class="fas fa-plus"></i> Confirm Import</button>
+                    </form>
+                </div>
+                
+                <div id="usagePanel" class="form-panel">
+                    <h2>Deduct Stock</h2>
+                    <form id="itemUsageForm">
+                        <input type="hidden" id="selectedItemKey_usage">
+                        <input type="hidden" id="selectedItemType_usage">
+                        <div class="form-group">
+                            <label class="form-label" for="itemName_usage">Item Search</label>
+                            <input type="text" id="itemName_usage" class="form-control" placeholder="Find item to record usage..." required autocomplete="off">
+                            <div id="suggestions_usage" class="suggestions-container"></div>
+                        </div>
+                        <div id="currentStockDisplay">Current Stock: <strong>N/A</strong></div>
+                        <div class="form-group">
+                            <label class="form-label" for="itemQuantity_usage">Quantity Used</label>
+                            <input type="number" id="itemQuantity_usage" class="form-control" placeholder="0.00" required step="any">
+                        </div>
+                        <button type="submit" class="btn btn-warning" style="width: 100%"><i class="fas fa-save"></i> Save Usage Record</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h2>Inventory Status</h2>
+                <div class="form-group">
+                    <input type="text" id="inventorySearch" class="form-control" placeholder="Filter inventory list...">
+                </div>
+                <div id="rawMaterialsInventorySection" class="inventory-section">
+                    <h3><i class="fas fa-carrot"></i> Raw Materials</h3>
+                    <ul id="rawMaterialsList" class="inventory-list">
+                        <li class="empty-state">Loading...</li>
+                    </ul>
+                </div>
+                <div id="menuItemsInventorySection" class="inventory-section">
+                    <h3><i class="fas fa-hamburger"></i> Prepared Items</h3>
+                    <ul id="menuItemsList" class="inventory-list">
+                        <li class="empty-state">Loading...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+        <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="admin-core.js"></script>
+    <script src="auth.js"></script>
+    <script src="inventory.js"></script>
+    
+</body>
+</html>

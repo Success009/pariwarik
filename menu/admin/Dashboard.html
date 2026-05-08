@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Dashboard | Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="admin-common.css">
+    <style>
+        .stats-container { background-color: var(--white); border-radius: var(--radius-md); box-shadow: var(--shadow); padding: 1.5rem; margin-bottom: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
+        .stat-card { padding: 1.5rem; border-radius: var(--radius-md); text-align: center; transition: var(--transition); }
+        .stat-card:hover { transform: translateY(-3px); }
+        .stat-card.revenue { background-color: rgba(46, 204, 113, 0.1); color: var(--success); }
+        .stat-card.cost { background-color: rgba(241, 196, 15, 0.1); color: #d35400; }
+        .stat-card.profit { background-color: rgba(67, 97, 238, 0.1); color: var(--primary); }
+        .stat-card.cancelled { background-color: rgba(231, 76, 60, 0.1); color: var(--danger); }
+        .stat-card.inventory { background-color: rgba(52, 152, 219, 0.1); color: #2980b9; }
+        .stat-value { font-size: 2rem; font-weight: 800; margin: 0.5rem 0; }
+        .stat-label { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+        
+        .view-toggle { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; }
+        .view-btn { background-color: var(--white); border: 2px solid #e0e6ed; color: var(--gray); box-shadow: var(--shadow); width: auto; flex: none; }
+        .view-btn.active { background-color: var(--primary); color: var(--white); border-color: var(--primary); }
+        
+        .filters { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .filter-dropdown, .search-box { padding: 12px; border-radius: var(--radius-md); border: 2px solid #e0e6ed; background-color: var(--white); transition: var(--transition); }
+        .filter-dropdown:focus, .search-box:focus { border-color: var(--primary); outline: none; }
+        .search-box { flex-grow: 2; }
+        
+        .data-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1.5rem; }
+        .data-card { background-color: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; transition: var(--transition); border: 1px solid rgba(0,0,0,0.02); }
+        .data-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
+        .card-header { padding: 1.25rem; border-bottom: 1px solid #f0f2f5; }
+        .card-header.sales { background-color: rgba(46, 204, 113, 0.05); color: var(--success); }
+        .card-header.cancelled { background-color: rgba(231, 76, 60, 0.05); color: var(--danger); }
+        .card-header.imports { background-color: rgba(52, 152, 219, 0.05); color: #2980b9; }
+        .card-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .timestamp { font-size: 0.8rem; color: var(--gray); }
+        .card-body { padding: 1.5rem; }
+        .item-list { list-style: none; padding: 0; }
+        .item-list li { padding: 0.75rem 0; font-size: 0.95rem; display: flex; justify-content: space-between; border-bottom: 1px dashed #f0f2f5; }
+        .item-list li:last-child { border-bottom: none; }
+        .price-info { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 2px solid #f0f2f5; }
+        .total-price { font-weight: 800; font-size: 1.2rem; display: flex; justify-content: space-between; }
+        .total-price.sales { color: var(--success); }
+        .total-price.cancelled { color: var(--danger); }
+        .total-price.imports { color: #2980b9; }
+        .empty-state { padding: 5rem; text-align: center; color: var(--gray); grid-column: 1/-1; opacity: 0.6; }
+        .empty-state i { font-size: 4rem; margin-bottom: 1.5rem; }
+
+        @media (max-width: 600px) {
+            .data-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="stats-container" id="statsContainer">
+            <div class="stat-card revenue"><div class="stat-label">Total Revenue</div><div class="stat-value" id="totalRevenue">Rs 0</div></div>
+            <div class="stat-card cost"><div class="stat-label">Cost of Goods</div><div class="stat-value" id="costOfUsed">Rs 0</div></div>
+            <div class="stat-card cancelled"><div class="stat-label">Cancelled Orders</div><div class="stat-value" id="cancelledCount">0 Orders</div></div>
+            <div class="stat-card inventory"><div class="stat-label">Inventory Value</div><div class="stat-value" id="inventoryValue">Rs 0</div></div>
+        </div>
+
+                <div class="view-toggle">
+            <button class="btn view-btn active" id="viewSalesBtn" onclick="setView('sales')"><i class="fas fa-chart-line"></i> Sales History</button>
+            <button class="btn view-btn" id="viewCancelledBtn" onclick="setView('cancelled')"><i class="fas fa-times-circle"></i> Cancelled Orders</button>
+            <button class="btn view-btn" id="viewImportsBtn" onclick="setView('imports')"><i class="fas fa-boxes"></i> Import History</button>
+        </div>
+    
+
+        <div class="filters">
+            <input type="text" class="search-box" id="searchBox" placeholder="Search sales...">
+            <select class="filter-dropdown" id="timeFilter">
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+            </select>
+            <select class="filter-dropdown" id="sortOrder">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="highest">Highest Amount</option>
+                <option value="lowest">Lowest Amount</option>
+            </select>
+        </div>
+
+        <div class="data-container" id="dataContainer">
+            <div style="text-align: center; padding: 5rem; opacity: 0.5; grid-column: 1/-1;">
+                <i class="fas fa-circle-notch fa-spin fa-3x"></i>
+                <p style="margin-top: 1rem;">Loading report data...</p>
+            </div>
+        </div>
+    </main>
+
+        <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="admin-core.js"></script>
+    <script src="auth.js"></script>
+    <script src="dashboard.js"></script>
+    
+</body>
+</html>

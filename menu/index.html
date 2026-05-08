@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dining Menu | Pariwarik Hotel</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="menu.css">
+</head>
+<body>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase;">Loading Menu...</p>
+    </div>
+
+    <header class="app-header">
+        <div class="header-left">
+            <a href="index.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="logo-wrapper">
+                <img src="logo.jpg" alt="Pariwarik Logo" class="logo-img">
+                <div class="header-title">Pariwarik Fast Food</div>
+            </div>
+        </div>
+    </header>
+
+
+    <div class="nav-sticky">
+        <div class="search-container">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search for delicacies..." oninput="renderItems()">
+        </div>
+    </div>
+
+    <main id="menuContent">
+        <!-- Menu items will be rendered here by menu.js -->
+    </main>
+
+    <div class="bottom-bar shadow-lg">
+        <div class="total-info" onclick="toggleDrawer('cartDrawer')">
+            <div class="label">Your Order</div>
+            <div class="val">Rs <span id="mainTotal">0.00</span></div>
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <div class="action-btn" onclick="toggleDrawer('cartDrawer')">
+                <i class="fas fa-shopping-basket"></i>
+                <div id="cartBadge" class="badge" style="display: none;">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" class="overlay" onclick="closeAll()"></div>
+
+    <!-- Cart Drawer -->
+    <div id="cartDrawer" class="drawer">
+        <div class="drawer-header">
+            <h3>Your Selection</h3>
+            <i class="fas fa-times" onclick="closeAll()"></i>
+        </div>
+        <div id="cartList" class="drawer-body">
+            <!-- Cart items here -->
+        </div>
+        <div class="drawer-footer">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: 700; font-family: var(--font-serif); font-size: 1.2rem;">
+                <span>Total Amount</span>
+                <span id="cartTotalDrawer">Rs 0.00</span>
+            </div>
+            <button class="btn-confirm-red" onclick="checkRegistration()">Confirm Order</button>
+        </div>
+    </div>
+
+    <!-- Registration Drawer Step 1 -->
+    <div id="regDrawerStep1" class="drawer">
+        <div class="drawer-header">
+            <h3>Ordering Details</h3>
+            <i class="fas fa-times" onclick="closeAll()"></i>
+        </div>
+        <div class="drawer-body" style="padding: 25px;">
+            <div class="input-group">
+                <label>Full Name</label>
+                <input type="text" id="regName" class="input-box" placeholder="Enter your name">
+            </div>
+            <div class="input-group">
+                <label>Contact Number</label>
+                <input type="tel" id="regPhone" class="input-box" placeholder="+977-XXXXXXXXXX">
+            </div>
+            <div style="margin-top: 20px;">
+                <button class="btn-add" onclick="goToStep2()">Next Step</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registration Drawer Step 2 -->
+    <div id="regDrawerStep2" class="drawer">
+        <div class="drawer-header">
+            <h3>Location Check</h3>
+            <i class="fas fa-times" onclick="closeAll()"></i>
+        </div>
+        <div class="drawer-body" style="padding: 25px; text-align: center; flex-direction: column; justify-content: center; display: flex;">
+            <i class="fas fa-map-marker-alt fa-3x text-primary" style="margin-bottom: 20px; color: var(--primary);"></i>
+            <h4 style="margin-bottom: 15px; font-family: var(--font-serif); font-size: 1.5rem;">Are you located in Bharatpur 10?</h4>
+            <p class="small text-muted" style="margin-bottom: 25px;">We currently offer delivery exclusively within Bharatpur 10.</p>
+            <div style="display: flex; gap: 15px; flex-direction: column;">
+                <button class="btn-confirm-red" onclick="goToStep3()">Yes, I am in Bharatpur 10</button>
+                <button class="btn btn-outline-primary w-100" style="padding: 14px; font-size: 0.85rem; border-radius: 50px;" onclick="redirectToPartner()">No, I am outside</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registration Drawer Step 3 -->
+    <div id="regDrawerStep3" class="drawer">
+        <div class="drawer-header">
+            <h3>Landmark</h3>
+            <i class="fas fa-times" onclick="closeAll()"></i>
+        </div>
+        <div class="drawer-body" style="padding: 25px;">
+            <div class="input-group">
+                <label>Nearest Landmark / Chowk</label>
+                <input type="text" id="regLandmark" class="input-box" placeholder="e.g. Near Central Hospital">
+            </div>
+            <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn-add" onclick="saveReg()">Continue</button>
+                <button class="btn btn-outline-primary w-100" style="padding: 12px; font-size: 0.75rem; border-radius: 50px; border:none; text-decoration: underline;" onclick="goToStep1()">Go Back</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Drawer -->
+    <div id="confirmDrawer" class="drawer">
+        <div class="drawer-header">
+            <h3>Finalize Order</h3>
+            <i class="fas fa-times" onclick="closeAll()"></i>
+        </div>
+        <div class="drawer-body text-center" style="text-align: center;">
+            <i class="fas fa-concierge-bell fa-3x text-primary mb-4" style="margin-bottom: 20px; color: var(--primary);"></i>
+            <p id="confirmMsg">Ready to send your order to our kitchen?</p>
+            <p class="small text-muted" id="confirmSubMsg">Items will be prepared shortly.</p>
+        </div>
+        <div class="drawer-footer">
+            <button class="btn-place-order" onclick="finalizeOrder()">Place Order Now</button>
+            <button class="btn btn-outline-primary w-100" style="padding: 12px; font-size: 0.75rem; border-radius: 50px;" onclick="toggleDrawer('regDrawerStep1')">Update Delivery Details</button>
+        </div>
+    </div>
+
+    <!-- Custom Modal UI -->
+    <div id="customModal" class="modal-wrapper">
+        <div class="modal-backdrop" onclick="hideModal()"></div>
+        <div class="modal-card">
+            <div id="modalIcon" class="modal-icon"><i class="fas fa-info"></i></div>
+            <div id="modalTitle" class="modal-title">Notice</div>
+            <p id="modalText" class="modal-text">Message goes here...</p>
+            <button class="modal-btn" onclick="hideModal()">Continue</button>
+        </div>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="menu.js"></script>

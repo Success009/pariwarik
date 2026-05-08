@@ -1,0 +1,366 @@
+/* Global Smoothness */
+* {
+    border-radius: inherit;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Color Palette - Refined Luxury (Restored) */
+    --primary-color: #8d6e63; 
+    --primary-dark: #5d4037;
+    --secondary-color: #546e7a;
+    --accent-color: #bfa054;
+    --price-gradient: linear-gradient(135deg, #bfa054 0%, #8d6e63 100%);
+    --dark-bg: #1a1a1b;
+    --light-bg: #f5f5f7;
+    --text-body: #424242;
+    --text-heading: #212121;
+    --white: #ffffff;
+    --shadow-sm: 0 4px 6px rgba(0,0,0,0.02);
+    --shadow-md: 0 10px 25px rgba(0,0,0,0.05);
+    --shadow-lg: 0 20px 50px rgba(0,0,0,0.1);
+    --radius-lg: 20px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+
+    /* Typography */
+    --font-serif: 'Cormorant Garamond', serif;
+    --font-sans: 'Montserrat', sans-serif;
+}
+
+/* Creative Price Tag */
+.price-tag {
+    background: var(--price-gradient) !important;
+    color: white !important;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 6px 20px rgba(184, 134, 11, 0.4);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    padding: 8px 18px !important;
+    font-size: 0.75rem;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--light-bg);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+}
+
+body {
+    font-family: var(--font-sans);
+    color: var(--text-body);
+    line-height: 1.7;
+    background-color: var(--white);
+    overflow-x: hidden;
+    width: 100%;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6, .font-serif {
+    font-family: var(--font-serif);
+    color: var(--text-heading);
+    font-weight: 600;
+}
+
+/* Rounded Buttons */
+.btn {
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    border-radius: 50px !important;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    padding: 14px 34px;
+    font-size: 0.75rem;
+}
+
+.btn-outline-dark {
+    padding: 14px 34px;
+    border: 1px solid var(--text-heading);
+    color: var(--text-heading);
+    font-size: 0.75rem;
+}
+
+/* Navbar with Rounded Background on Scroll */
+.navbar {
+    transition: all 0.4s ease;
+    padding: 20px 0;
+    width: 100%;
+}
+
+.navbar.scrolled {
+    padding: 10px 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-md);
+}
+
+.nav-link {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 500;
+    color: var(--text-heading) !important;
+    padding: 0.5rem 1.2rem !important;
+    position: relative;
+    transition: all 0.3s;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--primary-color);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+    border-radius: 2px;
+}
+
+.nav-link:hover::after, .nav-link.active::after {
+    width: 25px;
+}
+
+.nav-link.active {
+    color: var(--primary-color) !important;
+    font-weight: 700;
+}
+
+/* Section rounding and leaks */
+section {
+    position: relative;
+    overflow: hidden;
+}
+
+.container {
+    position: relative;
+}
+
+/* Hero Section */
+.hero-section {
+    height: 100vh;
+    min-height: 700px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.hero-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    animation: zoomEffect 30s infinite alternate linear;
+}
+
+@keyframes zoomEffect {
+    from { transform: scale(1); }
+    to { transform: scale(1.1); }
+}
+
+/* Cards Rounding */
+.card, .room-card {
+    border-radius: var(--radius-lg) !important;
+    overflow: hidden;
+    border: none !important;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.card:hover, .room-card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--shadow-lg);
+}
+
+.card-img-top {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+/* Floating Menu Button - Bottom Right & Pulse */
+.floating-menu-btn {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1050;
+    width: 60px;
+    height: 60px;
+    background: white;
+    border-radius: 50px;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    transition: width 0.6s cubic-bezier(0.165, 0.84, 0.44, 1), transform 0.3s ease;
+    animation: pulseMenu 3s infinite;
+}
+
+@keyframes pulseMenu {
+    0% { box-shadow: 0 0 0 0 rgba(125, 90, 80, 0.4); }
+    70% { box-shadow: 0 0 0 15px rgba(125, 90, 80, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(125, 90, 80, 0); }
+}
+
+.floating-menu-btn .icon-box {
+    min-width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color);
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.floating-menu-btn .text-box {
+    padding: 0 20px;
+    white-space: nowrap;
+    color: var(--text-heading);
+    font-weight: 700;
+    letter-spacing: 2px;
+    font-size: 0.75rem;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.floating-menu-btn:hover {
+    width: 220px;
+    animation: none;
+    transform: translateY(-5px);
+}
+
+.floating-menu-btn:hover .text-box {
+    opacity: 1;
+}
+
+/* Floating Social Bar - Top Left Corner (Lowered to avoid logo) */
+.floating-social-bar {
+    position: fixed;
+    left: 20px;
+    top: 100px;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.social-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white !important;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-size: 1.2rem;
+    background: white;
+    animation: socialFloat 4s ease-in-out infinite;
+}
+
+@keyframes socialFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+.social-btn.fb { background: #1877f2; animation-delay: 0s; }
+.social-btn.insta { background: #e4405f; animation-delay: 0.5s; }
+
+.social-btn:hover {
+    transform: scale(1.1) rotate(5deg) !important;
+    box-shadow: var(--shadow-lg);
+}
+
+@media (max-width: 576px) {
+    .floating-menu-btn {
+        right: 15px;
+        bottom: 15px;
+        width: 55px;
+        height: 55px;
+    }
+    .floating-menu-btn .icon-box {
+        min-width: 55px;
+        height: 55px;
+    }
+    .floating-social-bar {
+        left: 10px;
+        top: 85px; /* Increased to avoid blocking the logo on mobile */
+        gap: 10px;
+    }
+
+    .social-btn {
+        width: 45px;
+        height: 45px;
+    }
+}
+
+/* Forms */
+.form-control, .form-select, textarea {
+    border-radius: var(--radius-sm) !important;
+    border: 1px solid #eee !important;
+}
+
+.bg-white.p-5.shadow-lg {
+    border-radius: var(--radius-lg);
+}
+
+/* Testimonials */
+.rounded-circle {
+    border-radius: 50% !important;
+}
+
+/* Utility */
+.icon-circle {
+    border-radius: 50% !important;
+}
+
+.experience-badge {
+    border-radius: var(--radius-md);
+}
+
+.price-tag {
+    border-radius: 50px;
+    padding: 5px 15px !important;
+}
+
+/* Animations */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Footer ID Contact Fix */
+#contact {
+    scroll-margin-top: 80px;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .navbar {
+        border-radius: 0;
+    }
+    .hero-section {
+        height: 80vh;
+    }
+}

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Management | Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="admin-common.css">
+    <style>
+        .main-content { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; }
+        .upload-section { background-color: white; padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.02); }
+        .select-wrapper { position: relative; margin-bottom: 1.5rem; }
+        .select-wrapper::after { content: '\f078'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none; }
+        #itemSelect { width: 100%; padding: 12px; border: 2px solid #e0e6ed; border-radius: var(--radius-md); appearance: none; font-size: 1rem; transition: var(--transition); background-color: white; }
+        #itemSelect:focus { border-color: var(--primary); outline: none; }
+        
+        .file-upload { position: relative; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+        #imageUpload { display: none; }
+        #fileLabel { display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 1.5rem; border: 2px dashed #e0e6ed; border-radius: var(--radius-md); background-color: #f8faff; cursor: pointer; transition: var(--transition); color: var(--gray); font-weight: 600; }
+        #fileLabel:hover { border-color: var(--primary); background-color: #f0f7ff; color: var(--primary); }
+        
+        .file-preview { display: none; align-items: center; gap: 1rem; padding: 1rem; background-color: #f0f7ff; border-radius: var(--radius-md); border: 1px solid #d0e4ff; }
+        .file-preview img { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; }
+        .file-info { flex-grow: 1; }
+        .file-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 2px; word-break: break-all; color: var(--dark); }
+        .file-size { font-size: 0.75rem; color: var(--gray); }
+        .remove-file { color: var(--danger); cursor: pointer; font-size: 1.1rem; transition: var(--transition); }
+        
+        #uploadButton { width: 100%; margin-top: 1rem; }
+        .progress-container { display: none; margin-top: 1.5rem; }
+        .progress-bar { height: 8px; background-color: #e0e6ed; border-radius: 4px; overflow: hidden; }
+        .progress { height: 100%; background-color: var(--primary); width: 0%; transition: width 0.3s ease; }
+        .progress-text { font-size: 0.75rem; margin-top: 5px; text-align: right; color: var(--gray); font-weight: 700; }
+        
+        .gallery-section { background-color: white; padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.02); }
+        .gallery-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .gallery-title { font-size: 1.4rem; font-weight: 800; color: var(--dark); }
+        .gallery-count { background-color: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+        
+        #imageGallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1.25rem; }
+        .image-item { border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow); transition: var(--transition); border: 1px solid #f0f2f5; position: relative; }
+        .image-item:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .image-wrapper { position: relative; padding-top: 100%; }
+        .image-item img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+        .image-info { padding: 10px; background: white; text-align: center; }
+        .image-name { font-size: 0.8rem; font-weight: 700; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .delete-button { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; background-color: rgba(231, 76, 60, 0.9); color: white; border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: var(--transition); z-index: 5; }
+        .image-item:hover .delete-button { opacity: 1; }
+        
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-content { max-width: 85%; max-height: 85%; }
+        .modal-image { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
+        .close-modal { position: absolute; top: 25px; right: 30px; color: white; font-size: 2.5rem; cursor: pointer; }
+        .status-bar { display: none; margin-top: 1rem; padding: 10px; border-radius: 8px; font-size: 0.9rem; text-align: center; }
+        .status-bar.error { background: rgba(231, 76, 60, 0.1); color: var(--danger); border: 1px solid rgba(231, 76, 60, 0.2); }
+
+        @media (max-width: 850px) {
+            .main-content { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="main-content">
+            <div class="upload-section">
+                <h2>Upload Stock Image</h2>
+                <div class="select-wrapper">
+                    <select id="itemSelect">
+                        <option value="">Loading items...</option>
+                    </select>
+                </div>
+                <div class="file-upload">
+                    <input type="file" id="imageUpload" accept="image/jpeg,image/png">
+                    <label for="imageUpload" id="fileLabel">
+                        <i class="fas fa-cloud-upload-alt fa-2x"></i>
+                        <span>Click to Select Image</span>
+                    </label>
+                    <div class="file-preview" id="filePreview">
+                        <img id="previewImage" src="" alt="Preview">
+                        <div class="file-info">
+                            <div class="file-name" id="fileName"></div>
+                            <div class="file-size" id="fileSize"></div>
+                        </div>
+                        <i class="fas fa-times remove-file" id="removeFile"></i>
+                    </div>
+                </div>
+                <button id="uploadButton" class="btn btn-primary" disabled><i class="fas fa-upload"></i> Upload to Server</button>
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar"><div class="progress" id="progressBar"></div></div>
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+                <div class="status-bar" id="statusBar"></div>
+            </div>
+            <div class="gallery-section">
+                <div class="gallery-header">
+                    <h2 class="gallery-title">Current Asset Gallery</h2>
+                    <span class="gallery-count" id="imageCount">0</span>
+                </div>
+                <div id="imageGallery">
+                    <div style="text-align: center; padding: 3rem; opacity: 0.4; grid-column: 1/-1;">
+                        <i class="fas fa-circle-notch fa-spin fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal" id="imageModal">
+        <span class="close-modal" id="closeModal">&times;</span>
+        <div class="modal-content"><img src="" alt="Enlarged" class="modal-image" id="modalImage"></div>
+    </div>
+
+        <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="admin-core.js"></script>
+    <script src="auth.js"></script>
+    <script src="upload.js"></script>
+    
+</body>
+</html>

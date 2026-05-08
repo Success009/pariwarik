@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Order Management | Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="admin-common.css">
+    <style>
+        .order-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1.5rem; }
+        .order-card { background-color: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; transition: var(--transition); border: 1px solid rgba(0,0,0,0.02); }
+        .order-card:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
+        
+        .card-header { padding: 1.25rem; background-color: rgba(67, 97, 238, 0.03); border-bottom: 1px solid #f0f2f5; position: relative; }
+        .card-title { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .timestamp { font-size: 0.8rem; color: var(--gray); margin-bottom: 0.5rem; }
+        .device-id { font-size: 0.85rem; color: #0096c7; margin-top: 5px; font-weight: 600; display: flex; flex-direction: column; gap: 2px; }
+        
+        .card-body { padding: 1.25rem; }
+        .order-items h4 { font-size: 0.95rem; margin-bottom: 0.75rem; color: var(--dark); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .item-list { list-style: none; padding-left: 5px; }
+        .item-list li { padding: 0.6rem 0; font-size: 0.95rem; border-bottom: 1px dashed #f0f2f5; color: var(--dark); }
+        .item-list li:last-child { border-bottom: none; }
+        
+        .price-info { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 2px solid #f0f2f5; }
+        .total-price { font-weight: 800; color: var(--primary); font-size: 1.2rem; display: flex; justify-content: space-between; }
+        
+        .card-footer { padding: 1rem; display: flex; gap: 0.75rem; border-top: 1px solid #f0f2f5; background-color: #fcfdfe; }
+        .card-footer .btn { flex: 1; padding: 10px; font-size: 0.85rem; }
+
+        .empty-state { padding: 5rem; text-align: center; color: var(--gray); grid-column: 1 / -1; opacity: 0.6; }
+
+        /* Custom Modal */
+        .custom-modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .modal-content { background: white; padding: 2rem; border-radius: var(--radius-lg); width: 90%; max-width: 400px; text-align: center; position: relative; transform: translateY(-20px); opacity: 0; transition: var(--transition); box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+        .custom-modal.active .modal-content { transform: translateY(0); opacity: 1; }
+        .modal-icon { font-size: 48px; margin-bottom: 1rem; color: var(--primary); }
+        .modal-title { font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--dark); font-weight: 800; }
+        .modal-message { margin-bottom: 1.5rem; color: var(--gray); font-weight: 500; }
+        .modal-actions { display: flex; justify-content: center; gap: 0.75rem; }
+        .modal-btn { padding: 12px 24px; border-radius: var(--radius-md); border: none; cursor: pointer; font-weight: 700; transition: var(--transition); flex: 1; }
+        .modal-btn-confirm { background: var(--success); color: white; }
+        .modal-btn-cancel { background: #f0f2f5; color: var(--dark); }
+
+        @media (max-width: 600px) {
+            .order-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="order-container" id="orderSection">
+            <div style="text-align: center; padding: 5rem; opacity: 0.5;">
+                <i class="fas fa-circle-notch fa-spin fa-3x"></i>
+                <p style="margin-top: 1rem;">Scanning for new orders...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Custom Modal -->
+    <div class="custom-modal" id="customModal">
+        <div class="modal-content">
+            <i class="modal-icon fas"></i>
+            <h3 class="modal-title"></h3>
+            <p class="modal-message"></p>
+            <div class="modal-actions"></div>
+        </div>
+    </div>
+
+        <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="admin-core.js"></script>
+    <script src="auth.js"></script>
+    <script src="orders.js"></script>
+    
+</body>
+</html>

@@ -110,7 +110,7 @@ function startHeartbeat(db, uid) {
     syncPresence();
 
     // 3. Keep alive heartbeat
-    setInterval(syncPresence, 10000);
+    setInterval(syncPresence, 5000);
 
     // 4. Clean up on disconnect
     presenceRef.onDisconnect().remove();

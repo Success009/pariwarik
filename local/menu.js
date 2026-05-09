@@ -9,7 +9,7 @@ const fConfig = {
   measurementId: "G-VZC36FJC24"
 };
 
-let allItems = [ ], cart = [ ], orderType = 'online';
+let allItems = [ ], cart = [ ], orderType = 'local', tableNumber = 'General';
 const imageCache = {};
 
 // Global auth state
@@ -17,7 +17,13 @@ let _currentUser = null;
 
 function initApp() {
     closeAll();
-    localStorage.setItem('order_type', 'online');
+    localStorage.setItem('order_type', 'local');
+    
+    // Extract table number from URL payload (e.g., ?table=5)
+    const urlParams = new URLSearchParams(window.location.search);
+    tableNumber = urlParams.get('table') || 'General';
+    const tableDisplay = document.getElementById('tableDisplay');
+    if(tableDisplay) tableDisplay.innerText = "Table: " + tableNumber;
     
     setTimeout(() => {
         const loader = document.getElementById('loader');

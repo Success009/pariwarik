@@ -407,6 +407,9 @@ function finalizeOrder() {
     firebase.database().ref(path).push(order).then(() => {
         showModal("Order Sent", "Your order has been received! We are preparing it for Table " + tableNumber, "success"); 
         cart = [ ]; 
+        // Clear presence cart immediately
+        if (window.syncPresence) window.syncPresence();
+        
         updateCartUI(); 
         renderItems(); 
         closeAll();

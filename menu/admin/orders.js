@@ -15,7 +15,7 @@ menuRef.on('value', snap => {
 
 // 2. Main Order Fetching
 function fetchOrders() {
-    const paths = ['orders/grocery', 'orders/hotel', 'orders/online'];
+    const paths = ['orders/grocery', 'orders/hotel', 'orders/online', 'orders/local'];
     paths.forEach(path => {
         firebase.database().ref(path).on('value', (snapshot) => {
             const type = path.split('/')[1];
@@ -43,6 +43,11 @@ function fetchOrders() {
 }
 
 // 3. Main Rendering Logic
+function getImgUrl(name) {
+    const clean = name.replace(/\s+/g, '') + '.jpg';
+    return `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${clean}?alt=media`;
+}
+
 function renderAllOrders() {
     const orderSection = document.getElementById('orderSection');
     if (!orderSection) return;
@@ -63,7 +68,14 @@ function renderAllOrders() {
             const pricePerUnit = i.price !== undefined ? i.price : ((menuCache[i.name] || { }).price || 0) / ((menuCache[i.name] || { }).startingValue || 1);
             const qty = i.qty || i.quantity || 1;
             total += pricePerUnit * qty;
-            return `<li>${i.name} - Rs ${pricePerUnit.toFixed(2)} &times; ${qty}</li>`;
+            return `
+            <li style="display:flex; align-items:center; gap:10px;">
+                <img src="${getImgUrl(i.name)}" style="width:35px; height:35px; border-radius:4px; object-fit:cover; background:#f0f2f5;" onerror="this.src='https://via.placeholder.com/35?text=%3F'">
+                <div style="flex:1;">
+                    <div style="font-weight:600;">${i.name}</div>
+                    <div style="font-size:0.75rem; color:var(--gray);">Rs ${pricePerUnit.toFixed(2)} &times; ${qty}</div>
+                </div>
+            </li>`;
         }).join('');
 
         const html = `
@@ -71,7 +83,7 @@ function renderAllOrders() {
                 <div class="card-header">
                     <div class="card-title">
                         <span>${order.customerName || 'Guest'}</span>
-                        <span style="font-size:0.7rem; color:var(--secondary); background:#eee; padding:2px 6px; border-radius:4px;">${order.type === 'online' ? 'ONLINE ORDER' : (order.type === 'hotel' ? 'HOTEL ORDER' : 'LOCAL ORDER')}</span>
+                        <span style="font-size:0.65rem; color:var(--secondary); background:#eee; padding:2px 6px; border-radius:4px;">${order.type.toUpperCase()} ORDER</span>
                     </div>
                     <div class="timestamp" data-time="${order.timestamp}">${new Date(order.timestamp).toLocaleString()}</div>
                     <div class="device-id">
@@ -82,7 +94,6 @@ function renderAllOrders() {
                 </div>
                 <div class="card-body">
                     <div class="order-items">
-                        <h4><i class="fas fa-shopping-basket"></i> Items</h4>
                         <ul class="item-list">${itemsHTML}</ul>
                     </div>
                     <div class="price-info">
@@ -177,34 +188,30 @@ function listenToPresence() {
     if (!orderSection) return;
 
     firebase.database().ref('presence/local').on('value', snap => {
-        // Remove existing notifications first
         document.querySelectorAll('.presence-card').forEach(el => el.remove());
-        
         if (!snap.exists()) return;
 
         snap.forEach(child => {
             const data = child.val();
-            const itemsText = (data.cart || [ ]).map(i => `${i.name} (${i.qty})`).join(', ');
+            if (!data.cart || data.cart.length === 0) return; // Only show if they have a draft cart
+
+            const itemsHTML = data.cart.map(i => `
+                <div style="position:relative;">
+                    <img src="${getImgUrl(i.name)}" style="width:30px; height:30px; border-radius:50%; border:2px solid white; object-fit:cover;" title="${i.name}" onerror="this.style.display='none'">
+                    <span style="position:absolute; bottom:-5px; right:-5px; background:var(--primary); color:white; font-size:0.6rem; padding:1px 4px; border-radius:10px;">${i.qty}</span>
+                </div>
+            `).join('');
             
             const html = `
-                <div class="order-card presence-card" style="border-left: 5px solid #ff9f43; background: #fffaf5;">
-                    <div class="card-header" style="background: none;">
-                        <div class="card-title" style="color: #d35400;">
-                            <i class="fas fa-eye"></i> Customer Browsing
-                            <span style="font-size:0.7rem; color:white; background:#ff9f43; padding:2px 6px; border-radius:4px; margin-left:10px;">LIVE TABLE ${data.table}</span>
+                <div class="presence-card" style="margin-bottom:1rem; background:white; border-radius:var(--radius-md); padding:12px; box-shadow:var(--shadow); border-left:4px solid #ff9f43; display:flex; align-items:center; justify-content:space-between; gap:15px; animation: slideDown 0.3s ease;">
+                    <div style="flex:1;">
+                        <div style="font-weight:800; font-size:0.8rem; color:#d35400; text-transform:uppercase; letter-spacing:0.5px;">
+                            <i class="fas fa-eye"></i> Table ${data.table} Drafting
                         </div>
-                        <div class="timestamp" style="color: #e67e22;">Active right now</div>
+                        <div style="display:flex; gap:8px; margin-top:8px;">${itemsHTML}</div>
                     </div>
-                    <div class="card-body" style="padding-top: 0;">
-                        <div style="font-size: 0.9rem; color: #7f8c8d;">
-                            ${data.cart && data.cart.length > 0 ? 
-                                `<strong>Draft Cart:</strong> ${itemsText}` : 
-                                `Sitting at table, viewing menu...`
-                            }
-                        </div>
-                    </div>
+                    <div style="font-size:0.7rem; color:var(--gray); font-style:italic;">Real-time update...</div>
                 </div>`;
-            // Insert at top
             orderSection.insertAdjacentHTML('afterbegin', html);
         });
     });

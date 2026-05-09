@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dining Menu | Pariwarik Hotel</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="menu.css">
+</head>
+<body>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase;">Loading Menu...</p>
+    </div>
+
+    <header class="app-header">
+        <div class="header-left">
+            <a href="index.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="logo-wrapper">
+                <img src="logo.jpg" alt="Pariwarik Logo" class="logo-img">
+                <div class="header-title">Menu</div>
+            </div>
+        </div>
+    </header>
+
+
+    <div class="nav-sticky">
+        <div class="search-container">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search for delicacies..." oninput="renderItems()">
+        </div>
+    </div>
+
+    <main id="menuContent">
+        <!-- Menu items will be rendered here by menu.js -->
+    </main>
+
+    <div class="bottom-bar shadow-lg">
+        <div class="total-info" onclick="toggleDrawer('cartDrawer')">
+            <div class="label">Your Order</div>
+            <div class="val">Rs <span id="mainTotal">0.00</span></div>
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <div class="action-btn" onclick="toggleDrawer('cartDrawer')">
+                <i class="fas fa-shopping-basket"></i>
+                <div id="cartBadge" class="badge" style="display: none;">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" class="overlay" onclick="closeAll()"></div>
+
+    <!-- Cart Drawer -->
+    <div id="cartDrawer" class="drawer">
+        <div class="drawer-header">
+            <h3>Your Selection</h3>
+            <i class="fas fa-times" onclick="closeAll()"></i>
+        </div>
+        <div id="cartList" class="drawer-body">
+            <!-- Cart items here -->
+        </div>
+        <div class="drawer-footer">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: 700; font-family: var(--font-serif); font-size: 1.2rem;">
+                <span>Total Amount</span>
+                <span id="cartTotalDrawer">Rs 0.00</span>
+            </div>
+            <button class="btn-confirm-red" onclick="toggleDrawer('confirmDrawer')">Confirm Order</button>
+        </div>
+    </div>
+
+    <!-- Registration Drawers Removed for Local Menu -->
+
+    <!-- Confirm Drawer -->
+    <div id="confirmDrawer" class="drawer">
+        <div class="drawer-header">
+            <h3>Finalize Order</h3>
+            <i class="fas fa-times" onclick="closeAll()"></i>
+        </div>
+        <div class="drawer-body text-center" style="text-align: center; padding: 20px;">
+            <i class="fas fa-chair fa-3x text-primary mb-4" style="margin-bottom: 20px; color: var(--primary);"></i>
+            <h4 id="tableDisplay" style="font-family: var(--font-serif); font-size: 1.4rem; margin-bottom: 10px;">Table: --</h4>
+            <p id="confirmMsg">Ready to send your order to our kitchen?</p>
+            <p class="small text-muted" id="confirmSubMsg">Your items will be served at your table.</p>
+        </div>
+        <div class="drawer-footer">
+            <button class="btn-place-order" onclick="finalizeOrder()">Place Order Now</button>
+        </div>
+    </div>
+
+    <!-- Custom Modal UI -->
+    <div id="customModal" class="modal-wrapper">
+        <div class="modal-backdrop" onclick="hideModal()"></div>
+        <div class="modal-card">
+            <div id="modalIcon" class="modal-icon"><i class="fas fa-info"></i></div>
+            <div id="modalTitle" class="modal-title">Notice</div>
+            <p id="modalText" class="modal-text">Message goes here...</p>
+            <button class="modal-btn" onclick="hideModal()">Continue</button>
+        </div>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="menu.js"></script>

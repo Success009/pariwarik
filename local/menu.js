@@ -19,9 +19,17 @@ function initApp() {
     closeAll();
     localStorage.setItem('order_type', 'local');
     
-    // Extract table number from URL payload (e.g., ?table=5)
+    // 1. Extract table number and handle silent redirect
     const urlParams = new URLSearchParams(window.location.search);
-    tableNumber = urlParams.get('table') || 'General';
+    const tableParam = urlParams.get('table');
+    if (tableParam) {
+        localStorage.setItem('local_table', tableParam);
+        // Clean URL immediately
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({path: newUrl}, '', newUrl);
+    }
+    
+    tableNumber = localStorage.getItem('local_table') || 'General';
     const tableDisplay = document.getElementById('tableDisplay');
     if(tableDisplay) tableDisplay.innerText = "Table: " + tableNumber;
     
@@ -42,12 +50,9 @@ function initApp() {
             if(!user) {
                 auth.signInAnonymously().catch(err => {
                     console.error("Auth Error:", err.code, err.message);
-                    if(err.code === 'auth/operation-not-allowed') {
-                        showModal("Configuration Required", "Anonymous Sign-in is not enabled in your Firebase Console. Please go to Authentication -> Sign-in Method and enable 'Anonymous'.");
-                    } else if(window.location.protocol === 'file:') {
-                        showModal("Local File Detected", "Firebase Authentication requires a web server. Please run the 'run_dev.py' script and open http://localhost:8000");
-                    }
                 });
+            } else {
+                startHeartbeat(db, user.uid);
             }
             startListeners(db);
         });
@@ -87,6 +92,28 @@ function closeAll() {
     document.querySelectorAll('.drawer').forEach(d => d.classList.remove('active'));
     const ov = document.getElementById('overlay');
     if(ov) ov.classList.remove('active');
+}
+
+function startHeartbeat(db, uid) {
+    const presenceRef = db.ref(`presence/local/${uid}`);
+    
+    // 1. Sync current cart and table on any change
+    window.syncPresence = () => {
+        presenceRef.update({
+            table: tableNumber,
+            cart: cart,
+            lastSeen: firebase.database.ServerValue.TIMESTAMP
+        });
+    };
+
+    // 2. Initial presence
+    syncPresence();
+
+    // 3. Keep alive heartbeat
+    setInterval(syncPresence, 10000);
+
+    // 4. Clean up on disconnect
+    presenceRef.onDisconnect().remove();
 }
 
 function startListeners(db) {
@@ -210,6 +237,9 @@ function updateQty(id, dir) {
 }
 
 function updateCartUI() {
+    // Sync with Firebase presence node if available
+    if (window.syncPresence) window.syncPresence();
+
     let sub = 0;
     const list = document.getElementById('cartList');
     if(!list) return;

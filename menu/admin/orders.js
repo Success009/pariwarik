@@ -172,7 +172,46 @@ setInterval(() => {
     });
 }, 60000);
 
+function listenToPresence() {
+    const orderSection = document.getElementById('orderSection');
+    if (!orderSection) return;
+
+    firebase.database().ref('presence/local').on('value', snap => {
+        // Remove existing notifications first
+        document.querySelectorAll('.presence-card').forEach(el => el.remove());
+        
+        if (!snap.exists()) return;
+
+        snap.forEach(child => {
+            const data = child.val();
+            const itemsText = (data.cart || [ ]).map(i => `${i.name} (${i.qty})`).join(', ');
+            
+            const html = `
+                <div class="order-card presence-card" style="border-left: 5px solid #ff9f43; background: #fffaf5;">
+                    <div class="card-header" style="background: none;">
+                        <div class="card-title" style="color: #d35400;">
+                            <i class="fas fa-eye"></i> Customer Browsing
+                            <span style="font-size:0.7rem; color:white; background:#ff9f43; padding:2px 6px; border-radius:4px; margin-left:10px;">LIVE TABLE ${data.table}</span>
+                        </div>
+                        <div class="timestamp" style="color: #e67e22;">Active right now</div>
+                    </div>
+                    <div class="card-body" style="padding-top: 0;">
+                        <div style="font-size: 0.9rem; color: #7f8c8d;">
+                            ${data.cart && data.cart.length > 0 ? 
+                                `<strong>Draft Cart:</strong> ${itemsText}` : 
+                                `Sitting at table, viewing menu...`
+                            }
+                        </div>
+                    </div>
+                </div>`;
+            // Insert at top
+            orderSection.insertAdjacentHTML('afterbegin', html);
+        });
+    });
+}
+
 window.addEventListener('load', () => {
     injectHeader('StaffOrder.html');
     fetchOrders();
+    listenToPresence();
 });

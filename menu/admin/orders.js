@@ -15,7 +15,7 @@ menuRef.on('value', snap => {
 
 // 2. Main Order Fetching
 function fetchOrders() {
-    const paths = ['orders/grocery', 'orders/hotel', 'orders/local'];
+    const paths = ['orders/grocery', 'orders/hotel', 'orders/online'];
     paths.forEach(path => {
         firebase.database().ref(path).on('value', (snapshot) => {
             const type = path.split('/')[1];

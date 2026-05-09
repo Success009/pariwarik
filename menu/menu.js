@@ -330,7 +330,7 @@ function saveReg() {
     if(!landmark) return showModal("Required Info", "Please enter your nearest landmark.");
     
     localStorage.setItem('order_name', name);
-    localStorage.setItem('order_type', 'local');
+    localStorage.setItem('order_type', 'online');
     localStorage.setItem('local_phone', phone);
     localStorage.setItem('local_area', 'Bharatpur 10');
     localStorage.setItem('local_landmark', landmark);
@@ -380,7 +380,7 @@ function finalizeOrder() {
         order.distance = localStorage.getItem('local_distance');
     }
     
-    const path = type === 'hotel' ? `orders/hotel/${user.uid}` : `orders/local/${user.uid}`;
+    const path = type === 'hotel' ? `orders/hotel/${user.uid}` : `orders/online/${user.uid}`;
     
     firebase.database().ref(path).push(order).then(() => {
         showModal("Order Successful", "Your order has been sent to our kitchen. We will contact you shortly!", "success"); 

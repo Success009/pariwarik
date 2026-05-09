@@ -24,9 +24,8 @@ function initApp() {
     const tableParam = urlParams.get('table');
     if (tableParam) {
         localStorage.setItem('local_table', tableParam);
-        // Clean URL immediately
-        const newUrl = window.location.origin + window.location.pathname;
-        window.history.replaceState(null, '', newUrl);
+        // Clean URL immediately - stripping all query parameters
+        window.history.replaceState(null, null, window.location.pathname);
     }
     
     tableNumber = localStorage.getItem('local_table') || 'General';
@@ -48,10 +47,13 @@ function initApp() {
             console.log("Auth State:", user ? "Connected as " + user.uid : "Disconnected");
             _currentUser = user;
             if(!user) {
-                auth.signInAnonymously().catch(err => {
+                auth.signInAnonymously().then(() => {
+                    // This will trigger onAuthStateChanged again
+                }).catch(err => {
                     console.error("Auth Error:", err.code, err.message);
                 });
             } else {
+                // Ensure heartbeat starts IMMEDIATELY after auth
                 startHeartbeat(db, user.uid);
             }
             startListeners(db);

@@ -34,7 +34,9 @@ const createSearchHandler = (inputId, suggestionsId, onSelectCallback) => {
             if (item.name.toLowerCase().includes(query)) allMatches.push({ ...item, key, type: 'raw', relevance: getRelevance(item.name, query) }); 
         });
         Object.entries(menuItemsData).forEach(([key, item]) => { 
-            if (item.name.toLowerCase().includes(query)) allMatches.push({ ...item, key, type: 'menu', relevance: getRelevance(item.name, query) }); 
+            if (item.type === 'Hotel' && item.name.toLowerCase().includes(query)) {
+                allMatches.push({ ...item, key, type: 'menu', relevance: getRelevance(item.name, query) }); 
+            }
         });
         
         allMatches.sort((a, b) => { 
@@ -104,8 +106,11 @@ const renderInventory = () => {
     menuListEl.innerHTML = '<p class="no-results-message" style="display: none;">No matching menu items found.</p>';
     rawListEl.innerHTML = '<p class="no-results-message" style="display: none;">No matching raw materials found.</p>';
     
-    const sortedMenu = Object.entries(menuItemsData).sort((a,b) => a[1].name.localeCompare(b[1].name));
-    if (sortedMenu.length === 0) menuListEl.insertAdjacentHTML('afterbegin', '<p class="no-results-message">No menu items defined.</p>');
+    const sortedMenu = Object.entries(menuItemsData)
+        .filter(([_, item]) => item.type === 'Hotel')
+        .sort((a,b) => a[1].name.localeCompare(b[1].name));
+        
+    if (sortedMenu.length === 0) menuListEl.insertAdjacentHTML('afterbegin', '<p class="no-results-message">No hotel menu items defined.</p>');
     
     sortedMenu.forEach(([key, item]) => { 
         const stats = menuStatsMap[key] || { added: 0, used: 0 }; 

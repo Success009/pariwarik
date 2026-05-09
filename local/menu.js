@@ -25,8 +25,8 @@ function initApp() {
     if (tableParam) {
         localStorage.setItem('local_table', tableParam);
         // Clean URL immediately
-        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        window.history.replaceState({path: newUrl}, '', newUrl);
+        const newUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState(null, '', newUrl);
     }
     
     tableNumber = localStorage.getItem('local_table') || 'General';
@@ -99,14 +99,17 @@ function startHeartbeat(db, uid) {
     
     // 1. Sync current cart and table on any change
     window.syncPresence = () => {
-        presenceRef.update({
+        if (!tableNumber || tableNumber === 'General') {
+            tableNumber = localStorage.getItem('local_table') || 'General';
+        }
+        presenceRef.set({
             table: tableNumber,
             cart: cart,
             lastSeen: firebase.database.ServerValue.TIMESTAMP
         });
     };
 
-    // 2. Initial presence
+    // 2. Initial presence - trigger immediately
     syncPresence();
 
     // 3. Keep alive heartbeat
@@ -171,7 +174,7 @@ function renderItems() {
             card.innerHTML = `
                 <div class="img-container">
                     <div class="img-fallback"><i class="fas fa-utensils"></i></div>
-                    <img id="img-${item.id}" src="" style="display:none; transition: opacity 0.4s;">
+                    <img id="img-${item.id}" src="" style="display:none; transition: opacity 0.4s;" onerror="this.style.display='none'; this.previousElementSibling.style.display='flex';">
                 </div>
                 <div class="card-body">
                     <div class="p-name">${item.name}</div>

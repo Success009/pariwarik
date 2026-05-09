@@ -138,7 +138,7 @@ function renderItems() {
             card.innerHTML = `
                 <div class="img-container">
                     <div class="img-fallback"><i class="fas fa-utensils"></i></div>
-                    <img id="img-${item.id}" src="" style="display:none; transition: opacity 0.4s;">
+                    <img id="img-${item.id}" src="" style="display:none; transition: opacity 0.4s;" onerror="this.style.display='none'; this.previousElementSibling.style.display='flex';">
                 </div>
                 <div class="card-body">
                     <div class="p-name">${item.name}</div>

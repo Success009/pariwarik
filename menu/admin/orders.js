@@ -71,7 +71,7 @@ function renderAllOrders() {
                 <div class="card-header">
                     <div class="card-title">
                         <span>${order.customerName || 'Guest'}</span>
-                        <span style="font-size:0.7rem; color:var(--secondary); background:#eee; padding:2px 6px; border-radius:4px;">ONLINE ${order.type.toUpperCase()}</span>
+                        <span style="font-size:0.7rem; color:var(--secondary); background:#eee; padding:2px 6px; border-radius:4px;">${order.type === 'online' ? 'ONLINE ORDER' : 'ONLINE ' + order.type.toUpperCase()}</span>
                     </div>
                     <div class="timestamp" data-time="${order.timestamp}">${new Date(order.timestamp).toLocaleString()}</div>
                     <div class="device-id">

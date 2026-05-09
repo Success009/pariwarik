@@ -48,8 +48,40 @@
         .empty-state { padding: 5rem; text-align: center; color: var(--gray); grid-column: 1/-1; opacity: 0.6; }
         .empty-state i { font-size: 4rem; margin-bottom: 1.5rem; }
 
-        @media (max-width: 600px) {
-            .data-container { grid-template-columns: 1fr; }
+        @media (max-width: 768px) {
+            .container { margin: 1rem auto; padding: 0 1rem; }
+            .stats-container { 
+                grid-template-columns: repeat(2, 1fr); 
+                gap: 1rem; 
+                padding: 1rem; 
+                margin-bottom: 1.5rem; 
+            }
+            .stat-card { padding: 1rem; }
+            .stat-value { font-size: 1.25rem; }
+            .stat-label { font-size: 0.7rem; }
+            
+            .view-toggle { 
+                gap: 0.5rem; 
+                margin-bottom: 1.5rem;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                justify-content: flex-start;
+                padding-bottom: 10px;
+                -webkit-overflow-scrolling: touch;
+            }
+            .view-btn { 
+                padding: 10px 15px; 
+                font-size: 0.85rem; 
+                white-space: nowrap;
+            }
+
+            .filters { gap: 0.75rem; }
+            .search-box { order: 1; width: 100%; }
+            .filter-dropdown { order: 2; flex: 1; padding: 10px; font-size: 0.9rem; }
+
+            .data-container { grid-template-columns: 1fr; gap: 1rem; }
+            .data-card { border-radius: var(--radius-md); }
+            .card-body { padding: 1rem; }
         }
     </style>
 </head>

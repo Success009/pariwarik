@@ -211,23 +211,45 @@ function listenToPresence() {
                 return;
             }
 
-            const itemsHTML = (data.cart || [ ]).map(i => `
-                <div style="position:relative;">
-                    <img src="${getImgUrl(i.name)}" style="width:30px; height:30px; border-radius:50%; border:2px solid white; object-fit:cover;" title="${i.name}" onerror="this.style.display='none'">
-                    <span style="position:absolute; bottom:-5px; right:-5px; background:var(--primary); color:white; font-size:0.6rem; padding:1px 4px; border-radius:10px;">${i.qty}</span>
-                </div>
-            `).join('');
+            const items = data.cart || [ ];
+            let total = 0;
+
+            const itemsHTML = items.map(i => {
+                // Presence data includes price already synced from local/menu.js
+                const price = i.price || 0;
+                const qty = i.qty || 1;
+                total += price * qty;
+                return `
+                <li style="display:flex; align-items:center; gap:10px;">
+                    <img src="${getImgUrl(i.name)}" style="width:35px; height:35px; border-radius:4px; object-fit:cover; background:#f0f2f5;" onerror="this.src='https://via.placeholder.com/35?text=%3F'">
+                    <div style="flex:1;">
+                        <div style="font-weight:600;">${i.name}</div>
+                        <div style="font-size:0.75rem; color:var(--gray);">Rs ${price.toFixed(2)} &times; ${qty}</div>
+                    </div>
+                </li>`;
+            }).join('');
             
             const html = `
-                <div class="presence-card" style="margin-bottom:1rem; background:white; border-radius:var(--radius-md); padding:12px; box-shadow:var(--shadow); border-left:4px solid #ff9f43; display:flex; align-items:center; justify-content:space-between; gap:15px; animation: slideDown 0.3s ease;">
-                    <div style="flex:1;">
-                        <div style="font-weight:800; font-size:0.8rem; color:#d35400; text-transform:uppercase; letter-spacing:0.5px;">
-                            <i class="fas fa-eye"></i> Table ${data.table} ${data.cart && data.cart.length > 0 ? 'Drafting' : 'Browsing'}
+                <div class="order-card presence-card" style="border-left: 5px solid #ff9f43; background: #fffaf5;">
+                    <div class="card-header" style="background: none;">
+                        <div class="card-title" style="color: #d35400;">
+                            <span>Table ${data.table} (Browsing)</span>
+                            <span style="font-size:0.65rem; color:white; background:#ff9f43; padding:2px 6px; border-radius:4px; margin-left:10px;">LIVE PREVIEW</span>
                         </div>
-                        <div style="font-size:0.65rem; color:#e67e22; margin-top:2px;">Using ${parseDevice(data.device)}</div>
-                        <div style="display:flex; gap:8px; margin-top:8px;">${itemsHTML || '<span style="font-size:0.75rem; color:var(--gray); font-style:italic;">Viewing menu items...</span>'}</div>
+                        <div class="timestamp" style="color: #e67e22;">Active using ${parseDevice(data.device)}</div>
                     </div>
-                    <div style="font-size:0.7rem; color:var(--gray); font-style:italic;">Live</div>
+                    <div class="card-body">
+                        <div class="order-items">
+                            <ul class="item-list">${itemsHTML || '<li style="color:var(--gray); font-style:italic; border:none;">No items in cart yet...</li>'}</ul>
+                        </div>
+                        ${items.length > 0 ? `
+                        <div class="price-info">
+                            <div class="price-row total-price" style="color:#d35400;">
+                                <span>Draft Total:</span>
+                                <span>Rs ${total.toFixed(2)}</span>
+                            </div>
+                        </div>` : ''}
+                    </div>
                 </div>`;
             orderSection.insertAdjacentHTML('afterbegin', html);
         });

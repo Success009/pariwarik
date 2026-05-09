@@ -21,7 +21,16 @@ const fetchAllData = async () => {
         cancelledOrdersRef.limitToLast(100).once('value')
     ]);
     
+    // 1. Populate menuCache FIRST so we can use it for calculations
+    menuCache = { };
+    if (menuSnapshot.exists()) {
+        menuSnapshot.forEach(child => {
+            const item = child.val();
+            menuCache[item.name] = { price: item.price || 0, startingValue: item.startingValue || 1 };
+        });
+    }
 
+    // 2. Process Cancelled Orders
     let cancelledCount = 0;
     allCancelled = [ ];
     if (cancelledSnapshot.exists()) {
@@ -31,6 +40,7 @@ const fetchAllData = async () => {
             let orderTotal = 0;
             if(order.items) {
                 order.items.forEach(item => {
+                    // Use price from order if available, else fall back to menuCache
                     const pricePerUnit = item.price !== undefined ? item.price : ((menuCache[item.name] || { }).price || 0) / ((menuCache[item.name] || { }).startingValue || 1);
                     const qty = item.qty || item.quantity || 1;
                     orderTotal += pricePerUnit * qty;
@@ -42,11 +52,6 @@ const fetchAllData = async () => {
         cancelledCount = allCancelled.length;
     }
     document.getElementById('cancelledCount').textContent = `${cancelledCount} Orders`;
-    
-    menuSnapshot.forEach(child => {
-        const item = child.val();
-        menuCache[item.name] = { price: item.price || 0, startingValue: item.startingValue || 1 };
-    });
 
     let totalRevenue = 0;
     allOrders = [ ];

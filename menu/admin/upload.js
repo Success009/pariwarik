@@ -114,14 +114,14 @@ const displayImages = () => {
                 
                 imageItem.querySelector('.delete-button').addEventListener('click', (e) => {
                     e.stopPropagation();
-                    if (confirm('Delete this image?')) {
+                    showConfirm('Delete Image?', 'Are you sure you want to permanently delete this image?', () => {
                         storage.ref('images/' + imageRef.name).delete().then(() => {
                             imageItem.remove();
                             showToast('Image deleted successfully');
                             const currentCount = parseInt(imageCount.textContent) - 1;
                             imageCount.textContent = currentCount;
                         }).catch(err => showToast(err.message, 'error'));
-                    }
+                    });
                 });
                 imageGallery.appendChild(imageItem);
             });

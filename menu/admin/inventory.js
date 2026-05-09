@@ -81,14 +81,20 @@ const resetAddForm = (form) => {
 };
 
 const deleteRawMaterial = (key) => { 
-    if(confirm('Delete Raw Material? This will remove the import and all usage data.')) {
-        const updates = { }; 
-        updates[`/import_items/${key}`] = null; 
-        usageRef.orderByChild('importKey').equalTo(key).once('value', s => { 
-            s.forEach(c => { updates[`/usage_records/${c.key}`] = null; }); 
-            firebase.database().ref().update(updates).then(() => showToast('Item deleted.', 'success')).catch(err => showToast('Deletion failed.', 'error')); 
-        }); 
-    }
+    showConfirm(
+        'Delete Raw Material?', 
+        'This will permanently remove the import record and all of its associated usage data. This action cannot be undone.', 
+        () => {
+            const updates = { }; 
+            updates[`/import_items/${key}`] = null; 
+            usageRef.orderByChild('importKey').equalTo(key).once('value', s => { 
+                s.forEach(c => { updates[`/usage_records/${c.key}`] = null; }); 
+                firebase.database().ref().update(updates)
+                    .then(() => showToast('Item and usage data deleted.', 'success'))
+                    .catch(err => showToast('Deletion failed: ' + err.message, 'error')); 
+            });
+        }
+    );
 };
 
 const renderInventory = () => {

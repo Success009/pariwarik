@@ -32,6 +32,48 @@ var commonRefs = {
 /**
  * Injects the standard admin header into the page.
  */
+function injectModal() {
+    const modalHTML = `
+    <div class="custom-modal" id="globalModal">
+        <div class="custom-modal-content">
+            <i id="globalModalIcon" class="modal-icon fas"></i>
+            <h3 id="globalModalTitle" class="modal-title"></h3>
+            <p id="globalModalMessage" class="modal-message"></p>
+            <div id="globalModalActions" class="modal-actions"></div>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+let confirmCallback = null;
+function showConfirm(title, msg, onConfirm) {
+    const modal = document.getElementById('globalModal');
+    document.getElementById('globalModalIcon').className = 'modal-icon fas fa-exclamation-triangle';
+    document.getElementById('globalModalTitle').textContent = title;
+    document.getElementById('globalModalMessage').textContent = msg;
+    const actions = document.getElementById('globalModalActions');
+    actions.innerHTML = `
+        <button class="btn" onclick="hideConfirm()">Cancel</button>
+        <button class="btn btn-danger" onclick="executeConfirm()">Confirm</button>
+    `;
+    confirmCallback = onConfirm;
+    modal.classList.add('active');
+}
+
+function hideConfirm() {
+    const modal = document.getElementById('globalModal');
+    if(modal) modal.classList.remove('active');
+    confirmCallback = null;
+}
+
+function executeConfirm() {
+    if (typeof confirmCallback === 'function') {
+        confirmCallback();
+    }
+    hideConfirm();
+}
+
+
 function injectHeader(activePage) {
     const headerHTML = `
     <header class="app-header">
@@ -45,7 +87,8 @@ function injectHeader(activePage) {
             <a href="#" onclick="logout()" class="nav-link logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </nav>
     </header>`;
-    document.body.insertAdjacentHTML('afterbegin', headerHTML);
+        document.body.insertAdjacentHTML('afterbegin', headerHTML);
+    injectModal();
 }
     
 

@@ -107,6 +107,7 @@ function startHeartbeat(db, uid) {
         presenceRef.set({
             table: tableNumber,
             cart: cart,
+            device: navigator.userAgent,
             lastSeen: firebase.database.ServerValue.TIMESTAMP
         });
     };
@@ -396,6 +397,7 @@ function finalizeOrder() {
         customerName: "Table " + tableNumber, 
         orderType: 'local',
         tableNumber: tableNumber,
+        device: navigator.userAgent,
         items: cart, 
         totalPrice: parseFloat(document.getElementById('mainTotal').innerText), 
         status: 'Ordered', 

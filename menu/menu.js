@@ -365,6 +365,7 @@ function finalizeOrder() {
     const order = { 
         customerName: localStorage.getItem('order_name'), 
         orderType: type,
+        device: navigator.userAgent,
         items: cart, 
         totalPrice: parseFloat(document.getElementById('mainTotal').innerText), 
         status: 'Ordered', 

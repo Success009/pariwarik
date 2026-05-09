@@ -87,6 +87,7 @@ function renderAllOrders() {
                     </div>
                     <div class="timestamp" data-time="${order.timestamp}">${new Date(order.timestamp).toLocaleString()}</div>
                     <div class="device-id">
+                        ${order.device ? `<div style="color:#7f8c8d;"><i class="fas fa-mobile-alt"></i> ${parseDevice(order.device)}</div>` : ''}
                         ${order.phone ? `<div><i class="fas fa-phone"></i> ${order.phone}</div>` : ''}
                         ${order.landmark ? `<div><i class="fas fa-map-marker-alt"></i> ${order.landmark}</div>` : ''}
                         ${order.roomNumber ? `<div><i class="fas fa-door-open"></i> Room: ${order.roomNumber}</div>` : ''}
@@ -183,6 +184,15 @@ setInterval(() => {
     });
 }, 60000);
 
+function parseDevice(ua) {
+    if (!ua) return "Unknown Device";
+    if (ua.includes("iPhone")) return "iPhone";
+    if (ua.includes("Android")) return "Android Phone";
+    if (ua.includes("Windows")) return "Windows PC";
+    if (ua.includes("Macintosh")) return "MacBook/Mac";
+    return "Mobile/Tablet";
+}
+
 function listenToPresence() {
     const orderSection = document.getElementById('orderSection');
     if (!orderSection) return;
@@ -191,11 +201,17 @@ function listenToPresence() {
         document.querySelectorAll('.presence-card').forEach(el => el.remove());
         if (!snap.exists()) return;
 
+        const now = Date.now();
         snap.forEach(child => {
             const data = child.val();
-            if (!data.cart || data.cart.length === 0) return; // Only show if they have a draft cart
+            
+            // 1. Database Cleanup: Delete sessions older than 1 minute
+            if (data.lastSeen && (now - data.lastSeen > 60000)) {
+                firebase.database().ref('presence/local').child(child.key).remove();
+                return;
+            }
 
-            const itemsHTML = data.cart.map(i => `
+            const itemsHTML = (data.cart || [ ]).map(i => `
                 <div style="position:relative;">
                     <img src="${getImgUrl(i.name)}" style="width:30px; height:30px; border-radius:50%; border:2px solid white; object-fit:cover;" title="${i.name}" onerror="this.style.display='none'">
                     <span style="position:absolute; bottom:-5px; right:-5px; background:var(--primary); color:white; font-size:0.6rem; padding:1px 4px; border-radius:10px;">${i.qty}</span>
@@ -206,11 +222,12 @@ function listenToPresence() {
                 <div class="presence-card" style="margin-bottom:1rem; background:white; border-radius:var(--radius-md); padding:12px; box-shadow:var(--shadow); border-left:4px solid #ff9f43; display:flex; align-items:center; justify-content:space-between; gap:15px; animation: slideDown 0.3s ease;">
                     <div style="flex:1;">
                         <div style="font-weight:800; font-size:0.8rem; color:#d35400; text-transform:uppercase; letter-spacing:0.5px;">
-                            <i class="fas fa-eye"></i> Table ${data.table} Drafting
+                            <i class="fas fa-eye"></i> Table ${data.table} ${data.cart && data.cart.length > 0 ? 'Drafting' : 'Browsing'}
                         </div>
-                        <div style="display:flex; gap:8px; margin-top:8px;">${itemsHTML}</div>
+                        <div style="font-size:0.65rem; color:#e67e22; margin-top:2px;">Using ${parseDevice(data.device)}</div>
+                        <div style="display:flex; gap:8px; margin-top:8px;">${itemsHTML || '<span style="font-size:0.75rem; color:var(--gray); font-style:italic;">Viewing menu items...</span>'}</div>
                     </div>
-                    <div style="font-size:0.7rem; color:var(--gray); font-style:italic;">Real-time update...</div>
+                    <div style="font-size:0.7rem; color:var(--gray); font-style:italic;">Live</div>
                 </div>`;
             orderSection.insertAdjacentHTML('afterbegin', html);
         });

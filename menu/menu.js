@@ -9,7 +9,7 @@ const fConfig = {
   measurementId: "G-VZC36FJC24"
 };
 
-let allItems = [ ], cart = [ ], orderType = 'local';
+let allItems = [ ], cart = [ ], orderType = 'online';
 const imageCache = {};
 
 // Global auth state
@@ -17,7 +17,7 @@ let _currentUser = null;
 
 function initApp() {
     closeAll();
-    localStorage.setItem('order_type', 'local');
+    localStorage.setItem('order_type', 'online');
     
     setTimeout(() => {
         const loader = document.getElementById('loader');

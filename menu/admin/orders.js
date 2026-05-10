@@ -3,6 +3,33 @@ const menuRef = commonRefs.menu;
 const ordersRef = commonRefs.orders;
 const allOrders = { };
 const menuCache = { };
+const announcedOrders = new Set();
+let initialLoadMap = {
+    grocery: true,
+    hotel: true,
+    online: true,
+    local: true
+};
+
+function announceOrder(order) {
+    if (announcedOrders.has(order.id)) return;
+    announcedOrders.add(order.id);
+
+    let location = order.customerName || "a customer";
+    if (order.table) {
+        location = `table ${order.table}`;
+    } else if (order.roomNumber) {
+        location = `room ${order.roomNumber}`;
+    } else if (order.landmark) {
+        location = order.landmark;
+    }
+
+    const msg = `New order from ${location}`;
+    const utterance = new SpeechSynthesisUtterance(msg);
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+}
 
 // 1. Initial Menu Cache load
 menuRef.on('value', snap => {
@@ -27,7 +54,7 @@ function fetchOrders() {
             snapshot.forEach(userSnapshot => {
                 userSnapshot.forEach(orderSnapshot => {
                     const id = orderSnapshot.key;
-                    allOrders[id] = {
+                    const orderData = {
                         ...orderSnapshot.val(),
                         id: id,
                         type: type,
@@ -35,8 +62,19 @@ function fetchOrders() {
                         userUid: userSnapshot.key,
                         dbPath: path + '/' + userSnapshot.key + '/' + id
                     };
+                    
+                    allOrders[id] = orderData;
+
+                    // Announce if not initial load and it's a new "Ordered" status
+                    if (!initialLoadMap[type] && orderData.status === 'Ordered') {
+                        announceOrder(orderData);
+                    } else {
+                        // Mark as announced so we don't speak old orders on refresh
+                        announcedOrders.add(id);
+                    }
                 });
             });
+            initialLoadMap[type] = false;
             renderAllOrders();
         });
     });

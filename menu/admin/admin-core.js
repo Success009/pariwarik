@@ -77,3 +77,43 @@ function showToast(msg, type = 'success') {
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
+
+/**
+ * Formats relative time showing exactly two units (e.g. 1 hour 15 minutes old)
+ */
+function formatRelativeTime(timestamp) {
+    if (!timestamp) return "";
+    const diff = Math.max(0, Date.now() - new Date(timestamp).getTime());
+    
+    const units = [
+        { name: 'week', value: 7 * 24 * 60 * 60 * 1000 },
+        { name: 'day', value: 24 * 60 * 60 * 1000 },
+        { name: 'hour', value: 60 * 60 * 1000 },
+        { name: 'minute', value: 60 * 1000 },
+        { name: 'second', value: 1000 }
+    ];
+
+    let results = [ ];
+    let remaining = diff;
+
+    for (let i = 0; i &lt; units.length; i++) {
+        const unit = units[i];
+        if (remaining &gt;= unit.value) {
+            const count = Math.floor(remaining / unit.value);
+            results.push(`${count} ${unit.name}${count !== 1 ? 's' : ''}`);
+            remaining %= unit.value;
+            
+            if (i + 1 &lt; units.length) {
+                const nextUnit = units[i + 1];
+                const nextCount = Math.floor(remaining / nextUnit.value);
+                if (nextCount &gt; 0) {
+                    results.push(`${nextCount} ${nextUnit.name}${nextCount !== 1 ? 's' : ''}`);
+                }
+            }
+            break;
+        }
+    }
+
+    if (results.length === 0) return "just now";
+    return results.join(' ') + " old";
+}

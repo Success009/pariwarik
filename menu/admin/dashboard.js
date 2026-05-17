@@ -181,26 +181,28 @@ const renderContent = () => {
 
 const createCancelledCard = (order) => {
     const orderItems = (order.items || [ ]).map(item => {
-        if (item.isDivider) return '<li class="item-divider"></li>';
+        if (item.isDivider) return '&lt;li class="item-divider"&gt;&lt;/li&gt;';
         return '<li><span>' + item.name + '</span><span>&times; ' + (item.qty || item.quantity || 1) + '</span></li>';
     }).join('');
+    const location = order.tableNumber || order.landmark || order.roomNumber || ("Order #" + order.id.slice(-6));
     return `
         <div class="data-card">
-            <div class="card-header cancelled"><div class="card-title"><span>Order #${order.id.slice(-6)}</span><i class="fas fa-ban"></i></div><div class="timestamp">Cancelled: ${new Date(order.cancelledAt || order.timestamp).toLocaleString()}</div></div>
+            <div class="card-header cancelled"><div class="card-title"><span>${location}</span><i class="fas fa-ban"></i></div><div class="timestamp">Cancelled: ${new Date(order.cancelledAt || order.timestamp).toLocaleString()}</div></div>
             <div class="card-body">
                 <ul class="item-list">${orderItems || '<li>No items in this order</li>'}</ul>
                 <div class="price-info"><div class="total-price cancelled"><span>Lost Value:</span><span>Rs ${order.calculatedTotal.toFixed(2)}</span></div></div>
             </div>
         </div>`;
 };
-
 const createSaleCard = (order) => {
     const orderItems = (order.items || [ ]).map(item => {
-        if (item.isDivider) return '<li class="item-divider"></li>';
+        if (item.isDivider) return '&lt;li class="item-divider"&gt;&lt;/li&gt;';
         return '<li><span>' + item.name + '</span><span>&times; ' + (item.qty || item.quantity || 1) + '</span></li>';
     }).join('');
+    const location = order.tableNumber || order.landmark || order.roomNumber || ("Order #" + order.id.slice(-6));
     return `
         <div class="data-card">
+            <div class="card-header sales"><div class="card-title"><span>${location}</span><i class="fas fa-receipt"></i></div><div class="timestamp">${new Date(order.timestamp).toLocaleString()}</div></div>
             <div class="card-header sales"><div class="card-title"><span>Order #${order.id.slice(-6)}</span><i class="fas fa-receipt"></i></div><div class="timestamp">${new Date(order.timestamp).toLocaleString()}</div></div>
             <div class="card-body">
                 <ul class="item-list">${orderItems || '<li>No items in this order</li>'}</ul>

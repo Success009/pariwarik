@@ -5,6 +5,21 @@ const allOrders = { };
 const menuCache = { };
 const dbMergeScheduled = new Set();
 
+// Helpers
+function getImgUrl(name) {
+    const clean = name.replace(/\s+/g, '') + '.jpg';
+    return `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${clean}?alt=media`;
+}
+
+function parseDevice(ua) {
+    if (!ua) return "Unknown Device";
+    if (ua.includes("iPhone")) return "iPhone";
+    if (ua.includes("Android")) return "Android Phone";
+    if (ua.includes("Windows")) return "Windows PC";
+    if (ua.includes("Macintosh")) return "MacBook/Mac";
+    return "Mobile/Tablet";
+}
+
 // 1. Initial Menu Cache load
 menuRef.on('value', snap => {
     snap.forEach(child => {
@@ -16,7 +31,7 @@ menuRef.on('value', snap => {
 
 // 2. Main Order Fetching
 function fetchOrders() {
-    const paths = ['orders/grocery', 'orders/hotel', 'orders/local'];
+    const paths = ['orders/grocery', 'orders/hotel', 'orders/local', 'orders/online'];
     paths.forEach(path => {
         firebase.database().ref(path).on('value', (snapshot) => {
             const type = path.split('/')[1];
@@ -56,7 +71,6 @@ function scheduleDBMerge(newOrder, parentOrder) {
         const parentRef = db.ref(parentOrder.dbPath);
         const childRef = db.ref(newOrder.dbPath);
 
-        // Ensure child still exists before merging
         childRef.once('value').then(snap => {
             if (!snap.exists()) {
                 dbMergeScheduled.delete(mergeId);
@@ -66,15 +80,12 @@ function scheduleDBMerge(newOrder, parentOrder) {
             parentRef.transaction((current) => {
                 if (current) {
                     if (!current.mergedIds) current.mergedIds = [ ];
-                    if (current.mergedIds.includes(newOrder.id)) return; // Already merged
+                    if (current.mergedIds.includes(newOrder.id)) return;
 
                     current.mergedIds.push(newOrder.id);
-                    
-                    // Prepend new items and a divider to keep older items at the bottom
                     const divider = { isDivider: true };
                     current.items = [ ...newOrder.items, divider, ...current.items ];
                     
-                    // Update total price
                     const newTotal = (parseFloat(current.totalPrice) || 0) + (parseFloat(newOrder.totalPrice) || 0);
                     current.totalPrice = newTotal;
                     
@@ -102,7 +113,6 @@ function renderAllOrders() {
     const mergedChildIds = new Set();
     const parentAugmentations = { };
 
-    // Pass 1: Handle Merges for Local Orders
     rawOrders.forEach(order => {
         if (order.type === 'local' && order.status === 'Ordered' && order.tableNumber) {
             const parent = rawOrders.find(p => 
@@ -116,32 +126,33 @@ function renderAllOrders() {
                 if (!parentAugmentations[parent.id]) {
                     parentAugmentations[parent.id] = { batches: [ parent.items ] };
                 }
-                // Newer order at the top
                 parentAugmentations[parent.id].batches.unshift(order.items);
                 scheduleDBMerge(order, parent);
             }
         }
     });
 
-    // Pass 2: Filter display list
     rawOrders.forEach(order => {
         if (!mergedChildIds.has(order.id)) {
             displayOrders.push(order);
         }
     });
 
+    // We keep existing orders, presence cards will be added by listenToPresence
+    // Clear only non-presence cards to avoid flickering if we want, but for simplicity:
+    const presenceCards = Array.from(document.querySelectorAll('.presence-card'));
     orderSection.innerHTML = '';
+    presenceCards.forEach(card => orderSection.appendChild(card));
+
     const sorted = displayOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-    if (sorted.length === 0) {
+    if (sorted.length === 0 && presenceCards.length === 0) {
         orderSection.innerHTML = '<div class="empty-state"><h3>No Active Orders Found</h3></div>';
         return;
     }
 
     sorted.forEach(order => {
         let itemsToRender = order.items || [ ];
-        
-        // Use augmented batches if visually merging
         if (parentAugmentations[order.id]) {
             itemsToRender = [ ];
             parentAugmentations[order.id].batches.forEach((batch, idx) => {
@@ -154,13 +165,20 @@ function renderAllOrders() {
 
         let total = 0;
         const itemsHTML = itemsToRender.map(i => {
-            if (i.isDivider) {
-                return '<li class="item-divider"></li>';
-            }
-            const pricePerUnit = i.price !== undefined ? i.price : ((menuCache[i.name] || { }).price || 0) / ((menuCache[i.name] || { }).startingValue || 1);
+            if (i.isDivider) return '<li class="item-divider"></li>';
+            
+            const price = i.price !== undefined ? i.price : ((menuCache[i.name] || { }).price || 0) / ((menuCache[i.name] || { }).startingValue || 1);
             const qty = i.qty || i.quantity || 1;
-            total += pricePerUnit * qty;
-            return `<li>${i.name} - Rs ${pricePerUnit.toFixed(2)} &times; ${qty}</li>`;
+            total += price * qty;
+            
+            return `
+            <li style="display:flex; align-items:center; gap:10px;">
+                <img src="${getImgUrl(i.name)}" style="width:35px; height:35px; border-radius:4px; object-fit:cover; background:#f0f2f5;" onerror="this.src='https://via.placeholder.com/35?text=%3F'">
+                <div style="flex:1;">
+                    <div style="font-weight:600;">${i.name}</div>
+                    <div style="font-size:0.75rem; color:var(--gray);">Rs ${price.toFixed(2)} &times; ${qty}</div>
+                </div>
+            </li>`;
         }).join('');
 
         const html = `
@@ -172,6 +190,7 @@ function renderAllOrders() {
                     </div>
                     <div class="timestamp" data-time="${order.timestamp}">${new Date(order.timestamp).toLocaleString()}</div>
                     <div class="device-id">
+                        ${order.device ? `<div><i class="fas fa-mobile-alt"></i> ${parseDevice(order.device)}</div>` : ''}
                         ${order.phone ? `<div><i class="fas fa-phone"></i> ${order.phone}</div>` : ''}
                         ${order.landmark ? `<div><i class="fas fa-map-marker-alt"></i> ${order.landmark}</div>` : ''}
                         ${order.roomNumber ? `<div><i class="fas fa-door-open"></i> Room: ${order.roomNumber}</div>` : ''}
@@ -199,6 +218,65 @@ function renderAllOrders() {
                 </div>
             </div>`;
         orderSection.insertAdjacentHTML('beforeend', html);
+    });
+}
+
+function listenToPresence() {
+    const orderSection = document.getElementById('orderSection');
+    if (!orderSection) return;
+
+    firebase.database().ref('presence/local').on('value', snap => {
+        document.querySelectorAll('.presence-card').forEach(el => el.remove());
+        if (!snap.exists()) return;
+
+        const now = Date.now();
+        snap.forEach(child => {
+            const data = child.val();
+            if (data.lastSeen && (now - data.lastSeen > 60000)) {
+                firebase.database().ref('presence/local').child(child.key).remove();
+                return;
+            }
+
+            const items = data.cart || [ ];
+            let total = 0;
+            const itemsHTML = items.map(i => {
+                const price = i.price || 0;
+                const qty = i.qty || 1;
+                total += price * qty;
+                return `
+                <li style="display:flex; align-items:center; gap:10px;">
+                    <img src="${getImgUrl(i.name)}" style="width:35px; height:35px; border-radius:4px; object-fit:cover; background:#f0f2f5;" onerror="this.src='https://via.placeholder.com/35?text=%3F'">
+                    <div style="flex:1;">
+                        <div style="font-weight:600;">${i.name}</div>
+                        <div style="font-size:0.75rem; color:var(--gray);">Rs ${price.toFixed(2)} &times; ${qty}</div>
+                    </div>
+                </li>`;
+            }).join('');
+            
+            const html = `
+                <div class="order-card presence-card" style="border-left: 5px solid #ff9f43; background: #fffaf5;">
+                    <div class="card-header" style="background: none;">
+                        <div class="card-title" style="color: #d35400;">
+                            <span>Table ${data.table} (Browsing)</span>
+                            <span style="font-size:0.65rem; color:white; background:#ff9f43; padding:2px 6px; border-radius:4px; margin-left:10px;">LIVE PREVIEW</span>
+                        </div>
+                        <div class="timestamp" style="color: #e67e22;">Active using ${parseDevice(data.device)}</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="order-items">
+                            <ul class="item-list">${itemsHTML || '<li style="color:var(--gray); font-style:italic; border:none;">No items in cart yet...</li>'}</ul>
+                        </div>
+                        ${items.length > 0 ? `
+                        <div class="price-info">
+                            <div class="price-row total-price" style="color:#d35400;">
+                                <span>Draft Total:</span>
+                                <span>Rs ${total.toFixed(2)}</span>
+                            </div>
+                        </div>` : ''}
+                    </div>
+                </div>`;
+            orderSection.insertAdjacentHTML('afterbegin', html);
+        });
     });
 }
 
@@ -270,4 +348,5 @@ setInterval(() => {
 window.addEventListener('load', () => {
     injectHeader('StaffOrder.html');
     fetchOrders();
+    listenToPresence();
 });

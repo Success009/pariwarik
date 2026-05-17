@@ -83,7 +83,8 @@ function scheduleDBMerge(newOrder, parentOrder) {
                     if (current.mergedIds.includes(newOrder.id)) return;
 
                     current.mergedIds.push(newOrder.id);
-                    const divider = { isDivider: true };
+                    // Add timestamp to the divider for DB storage
+                    const divider = { isDivider: true, timestamp: newOrder.timestamp };
                     current.items = [ ...newOrder.items, divider, ...current.items ];
                     
                     const newTotal = (parseFloat(current.totalPrice) || 0) + (parseFloat(newOrder.totalPrice) || 0);
@@ -124,9 +125,11 @@ function renderAllOrders() {
             if (parent) {
                 mergedChildIds.add(order.id);
                 if (!parentAugmentations[parent.id]) {
-                    parentAugmentations[parent.id] = { batches: [ parent.items ] };
+                    // Store batches with timestamps
+                    parentAugmentations[parent.id] = { batches: [ { items: parent.items, timestamp: parent.timestamp } ] };
                 }
-                parentAugmentations[parent.id].batches.unshift(order.items);
+                // Newer order at the top
+                parentAugmentations[parent.id].batches.unshift({ items: order.items, timestamp: order.timestamp });
                 scheduleDBMerge(order, parent);
             }
         }
@@ -138,8 +141,6 @@ function renderAllOrders() {
         }
     });
 
-    // We keep existing orders, presence cards will be added by listenToPresence
-    // Clear only non-presence cards to avoid flickering if we want, but for simplicity:
     const presenceCards = Array.from(document.querySelectorAll('.presence-card'));
     orderSection.innerHTML = '';
     presenceCards.forEach(card => orderSection.appendChild(card));
@@ -156,16 +157,20 @@ function renderAllOrders() {
         if (parentAugmentations[order.id]) {
             itemsToRender = [ ];
             parentAugmentations[order.id].batches.forEach((batch, idx) => {
-                itemsToRender.push(...batch);
+                itemsToRender.push(...batch.items);
                 if (idx < parentAugmentations[order.id].batches.length - 1) {
-                    itemsToRender.push({ isDivider: true });
+                    // Include timestamp in the visual divider
+                    itemsToRender.push({ isDivider: true, timestamp: batch.timestamp });
                 }
             });
         }
 
         let total = 0;
         const itemsHTML = itemsToRender.map(i => {
-            if (i.isDivider) return '<li class="item-divider"></li>';
+            if (i.isDivider) {
+                const timeStr = i.timestamp ? new Date(i.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "New Items";
+                return `<li class="item-divider"><span class="divider-label">Added at ${timeStr}</span></li>`;
+            }
             
             const price = i.price !== undefined ? i.price : ((menuCache[i.name] || { }).price || 0) / ((menuCache[i.name] || { }).startingValue || 1);
             const qty = i.qty || i.quantity || 1;
@@ -194,7 +199,6 @@ function renderAllOrders() {
                         ${order.phone ? `<div><i class="fas fa-phone"></i> ${order.phone}</div>` : ''}
                         ${order.landmark ? `<div><i class="fas fa-map-marker-alt"></i> ${order.landmark}</div>` : ''}
                         ${order.roomNumber ? `<div><i class="fas fa-door-open"></i> Room: ${order.roomNumber}</div>` : ''}
-                        ${order.tableNumber ? `<div><i class="fas fa-utensils"></i> Table: ${order.tableNumber}</div>` : ''}
                     </div>
                 </div>
                 <div class="card-body">
@@ -245,7 +249,7 @@ function listenToPresence() {
                 total += price * qty;
                 return `
                 <li style="display:flex; align-items:center; gap:10px;">
-                    <img src="${getImgUrl(i.name)}" style="width:35px; height:35px; border-radius:4px; object-fit:cover; background:#f0f2f5;" onerror="this.src='https://via.placeholder.com/35?text=%3F'">
+                    <img src="${getImgUrl(i.name)}" style="width:35px; height:35px; border-radius:4px; object-fit:cover; background:#f0f2f5;" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=No+Image';">
                     <div style="flex:1;">
                         <div style="font-weight:600;">${i.name}</div>
                         <div style="font-size:0.75rem; color:var(--gray);">Rs ${price.toFixed(2)} &times; ${qty}</div>

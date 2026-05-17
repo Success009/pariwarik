@@ -181,7 +181,10 @@ const renderContent = () => {
 
 const createCancelledCard = (order) => {
     const orderItems = (order.items || [ ]).map(item => {
-        if (item.isDivider) return '&lt;li class="item-divider"&gt;&lt;/li&gt;';
+        if (item.isDivider) {
+             const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "New Batch";
+             return `<li class="item-divider"><span class="divider-label">Added at ${timeStr}</span></li>`;
+        }
         return '<li><span>' + item.name + '</span><span>&times; ' + (item.qty || item.quantity || 1) + '</span></li>';
     }).join('');
     const location = order.tableNumber || order.landmark || order.roomNumber || ("Order #" + order.id.slice(-6));
@@ -194,16 +197,19 @@ const createCancelledCard = (order) => {
             </div>
         </div>`;
 };
+
 const createSaleCard = (order) => {
     const orderItems = (order.items || [ ]).map(item => {
-        if (item.isDivider) return '&lt;li class="item-divider"&gt;&lt;/li&gt;';
+        if (item.isDivider) {
+             const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "New Batch";
+             return `<li class="item-divider"><span class="divider-label">Added at ${timeStr}</span></li>`;
+        }
         return '<li><span>' + item.name + '</span><span>&times; ' + (item.qty || item.quantity || 1) + '</span></li>';
     }).join('');
     const location = order.tableNumber || order.landmark || order.roomNumber || ("Order #" + order.id.slice(-6));
     return `
         <div class="data-card">
             <div class="card-header sales"><div class="card-title"><span>${location}</span><i class="fas fa-receipt"></i></div><div class="timestamp">${new Date(order.timestamp).toLocaleString()}</div></div>
-            <div class="card-header sales"><div class="card-title"><span>Order #${order.id.slice(-6)}</span><i class="fas fa-receipt"></i></div><div class="timestamp">${new Date(order.timestamp).toLocaleString()}</div></div>
             <div class="card-body">
                 <ul class="item-list">${orderItems || '<li>No items in this order</li>'}</ul>
                 <div class="price-info"><div class="total-price sales"><span>Total Sale:</span><span>Rs ${order.calculatedTotal.toFixed(2)}</span></div></div>

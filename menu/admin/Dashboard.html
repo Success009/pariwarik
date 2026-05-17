@@ -40,7 +40,11 @@
         .item-list { list-style: none; padding: 0; }
         .item-list li { padding: 0.75rem 0; font-size: 0.95rem; display: flex; justify-content: space-between; border-bottom: 1px dashed #f0f2f5; }
         .item-list li:last-child { border-bottom: none; }
-        .item-divider { height: 2px; background-color: var(--primary); margin: 10px 0; border: none; opacity: 0.15; list-style: none; width: 100%; }
+        .item-divider { display: flex; align-items: center; text-align: center; margin: 1.25rem 0; list-style: none; width: 100%; }
+        .item-divider::before, .item-divider::after { content: ''; flex: 1; border-bottom: 1px dashed var(--primary); opacity: 0.2; }
+        .item-divider:not(:empty)::before { margin-right: .75em; }
+        .item-divider:not(:empty)::after { margin-left: .75em; }
+        .divider-label { font-size: 0.65rem; font-weight: 800; color: var(--primary); background: rgba(67, 97, 238, 0.08); padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
         
         .price-info { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 2px solid #f0f2f5; }
         .total-price { font-weight: 800; font-size: 1.2rem; display: flex; justify-content: space-between; }

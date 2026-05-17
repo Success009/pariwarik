@@ -21,10 +21,6 @@ function parseDevice(ua) {
 }
 
 
-    if (results.length === 0) return "just now";
-    return results.join(' ') + " old";
-}
-
 // 1. Initial Menu Cache load
 menuRef.on('value', snap => {
     snap.forEach(child => {

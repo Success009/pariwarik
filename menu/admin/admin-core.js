@@ -96,7 +96,7 @@ function formatRelativeTime(timestamp) {
     let results = [ ];
     let remaining = diff;
 
-    for (let i = 0; i &lt; units.length; i++) {
+for (let i = 0; i &lt; units.length; i++) {
         const unit = units[i];
         if (remaining &gt;= unit.value) {
             const count = Math.floor(remaining / unit.value);

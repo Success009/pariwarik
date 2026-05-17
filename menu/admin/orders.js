@@ -108,7 +108,6 @@ function renderAllOrders() {
             const parent = rawOrders.find(p => 
                 p.type === 'local' && 
                 p.status === 'Accepted' && 
-                p.userUid === order.userUid && 
                 p.tableNumber === order.tableNumber
             );
             
@@ -168,7 +167,7 @@ function renderAllOrders() {
             <div class="order-card" id="${order.id}">
                 <div class="card-header">
                     <div class="card-title">
-                        <span>${order.customerName || 'Guest'}</span>
+                        <span>${order.tableNumber || order.customerName || 'Guest'}</span>
                         <span style="font-size:0.7rem; color:var(--secondary); background:#eee; padding:2px 6px; border-radius:4px;">${order.type.toUpperCase()}</span>
                     </div>
                     <div class="timestamp" data-time="${order.timestamp}">${new Date(order.timestamp).toLocaleString()}</div>

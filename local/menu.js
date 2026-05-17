@@ -9,29 +9,29 @@ const fConfig = {
   measurementId: "G-VZC36FJC24"
 };
 // Obscured Cipher Data
-
 const _T_DATA = "luxaOgpc6Tkf6isDdWinBEUygQad7HFj9QIWL6U8IGzgeF880PJfQ01HNyg1FbHn__3b-hHHmUKJecv-DUkXDydlCm07Gf585QsfxONsja8gMHh25jH33ASPfMEd5qWAw8sf2LO7guUM5iTGEsbUvQ63kQmQBgxbH7Q96aEA7AoyRgJh-UFWiM0eLeugx4D7Jg-OqdeGavDYKnL1_uB9JmVzjijHwW4Ops7_5LEPJwzZ_PPktd5KdPoDTkgBNeEU0YJa0RY3nSZQKif0JdG2WBlNXgIPMOXkIaG4AI6SYJ9520rO_Qgf6-x9Y-zHz_fRgroglE2WDZFIQbwEyO9rHkvONuBLrxzNV7CbdfZ9af08x-Lj";
 const _T_NAMES = ["table 1","table 2","table 3","table 4","hall 1","hall 2","hall 3","cabin 1","cabin 2","cabin 3","cabin 4","cabin 5","cabin 6","cabin up","terrace","top","room 101","room 102","room 103","room 104","room 201","room 202","room 203"];
 
-let allItems = [ ], cart = [ ], orderType = 'local', tableNumber = 'General';
+let allItems = [ ], cart = [ ], orderType = 'local', tableNumber = 'General', _currentUser = null;
 const imageCache = { };
 
 function initApp() {
     closeAll();
     localStorage.setItem('order_type', 'local');
     
-    // 1. Decrypt table from query string
-    const query = window.location.search.substring(1);
-    const idx = _T_DATA.indexOf(query);
-    
-if (query && query.length === 16 && idx !== -1 && idx % 16 === 0) {
-        localStorage.setItem('local_table', _T_NAMES[idx / 16]);
-        window.history.replaceState(null, null, window.location.pathname);
+    // 1. Secure Table Extraction (Ampersand-free logic)
+    const q = window.location.search.substring(1);
+    if (q) {
+        if (q.length === 16) {
+            const idx = _T_DATA.indexOf(q);
+            if (idx !== -1) {
+                if (idx % 16 === 0) {
+                    localStorage.setItem('local_table', _T_NAMES[idx / 16]);
+                    window.history.replaceState(null, null, window.location.pathname);
+                }
+            }
+        }
     }
-    
-    tableNumber = localStorage.getItem('local_table') || 'General';
-    const tableDisplay = document.getElementById('tableDisplay');
-    if(tableDisplay) tableDisplay.innerText = "Table: " + tableNumber;
     
     setTimeout(() => {
         const loader = document.getElementById('loader');

@@ -142,10 +142,10 @@ const applyFilters = () => {
         else if (timeFilter === 'month') matchesTime = itemDate >= thisMonth;
         
         let matchesSearch = !searchTerm || (currentView === 'sales'
-            ? item.id.toLowerCase().includes(searchTerm) || (item.items &amp;&amp; item.items.some(i => i.name &amp;&amp; i.name.toLowerCase().includes(searchTerm)))
-            : (item.name &amp;&amp; item.name.toLowerCase().includes(searchTerm)) || (item.type &amp;&amp; item.type.toLowerCase().includes(searchTerm)));
+            ? item.id.toLowerCase().includes(searchTerm) || (item.items && item.items.some(i => i.name && i.name.toLowerCase().includes(searchTerm)))
+            : (item.name && item.name.toLowerCase().includes(searchTerm)) || (item.type && item.type.toLowerCase().includes(searchTerm)));
         
-        return matchesTime &amp;&amp; matchesSearch;
+        return matchesTime && matchesSearch;
     });
 
     filteredItems.sort((a, b) => {
@@ -163,7 +163,7 @@ const applyFilters = () => {
 const renderContent = () => {
     const container = document.getElementById('dataContainer');
     if (filteredItems.length === 0) {
-        container.innerHTML = `&lt;div class="empty-state"&gt;&lt;i class="fas fa-filter"&gt;&lt;/i&gt;&lt;h3&gt;No Items Found&lt;/h3&gt;&lt;p&gt;Try changing your filters or view.&lt;/p&gt;&lt;/div&gt;`;
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-filter"></i><h3>No Items Found</h3><p>Try changing your filters or view.</p></div>';
         return;
     }
 
@@ -178,8 +178,8 @@ const renderContent = () => {
 
 const createCancelledCard = (order) => {
     const orderItems = (order.items || [ ]).map(item => {
-        if (item.isDivider) return '&lt;li class="item-divider"&gt;&lt;/li&gt;';
-        return `&lt;li&gt;&lt;span&gt;${item.name}&lt;/span&gt;&lt;span&gt;&amp;times; ${item.qty || item.quantity || 1}&lt;/span&gt;&lt;/li&gt;`;
+        if (item.isDivider) return '<li class="item-divider"></li>';
+        return `<li><span>${item.name}</span><span>&times; ${item.qty || item.quantity || 1}</span></li>`;
     }).join('');
     return `
         <div class="data-card">
@@ -193,8 +193,8 @@ const createCancelledCard = (order) => {
 
 const createSaleCard = (order) => {
     const orderItems = (order.items || [ ]).map(item => {
-        if (item.isDivider) return '&lt;li class="item-divider"&gt;&lt;/li&gt;';
-        return `&lt;li&gt;&lt;span&gt;${item.name}&lt;/span&gt;&lt;span&gt;&amp;times; ${item.qty || item.quantity || 1}&lt;/span&gt;&lt;/li&gt;`;
+        if (item.isDivider) return '<li class="item-divider"></li>';
+        return `<li><span>${item.name}</span><span>&times; ${item.qty || item.quantity || 1}</span></li>`;
     }).join('');
     return `
         <div class="data-card">

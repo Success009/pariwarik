@@ -20,7 +20,6 @@ function parseDevice(ua) {
     return "Mobile/Tablet";
 }
 
-
 // 1. Initial Menu Cache load
 menuRef.on('value', snap => {
     snap.forEach(child => {

@@ -96,14 +96,14 @@ function formatRelativeTime(timestamp) {
     let results = [ ];
     let remaining = diff;
 
-for (let i = 0; i &lt; units.length; i++) {
+    for (let i = 0; i < units.length; i++) {
         const unit = units[i];
         if (remaining >= unit.value) {
             const count = Math.floor(remaining / unit.value);
             results.push(`${count} ${unit.name}${count !== 1 ? 's' : ''}`);
             remaining %= unit.value;
             
-            if (i + 1 &lt; units.length) {
+            if (i + 1 < units.length) {
                 const nextUnit = units[i + 1];
                 const nextCount = Math.floor(remaining / nextUnit.value);
                 if (nextCount > 0) {

@@ -98,7 +98,7 @@ function formatRelativeTime(timestamp) {
 
 for (let i = 0; i &lt; units.length; i++) {
         const unit = units[i];
-        if (remaining &gt;= unit.value) {
+        if (remaining >= unit.value) {
             const count = Math.floor(remaining / unit.value);
             results.push(`${count} ${unit.name}${count !== 1 ? 's' : ''}`);
             remaining %= unit.value;
@@ -106,7 +106,7 @@ for (let i = 0; i &lt; units.length; i++) {
             if (i + 1 &lt; units.length) {
                 const nextUnit = units[i + 1];
                 const nextCount = Math.floor(remaining / nextUnit.value);
-                if (nextCount &gt; 0) {
+                if (nextCount > 0) {
                     results.push(`${nextCount} ${nextUnit.name}${nextCount !== 1 ? 's' : ''}`);
                 }
             }

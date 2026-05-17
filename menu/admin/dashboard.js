@@ -186,11 +186,17 @@ const createCancelledCard = (order) => {
              return `<li class="item-divider"><span class="divider-label">Added at ${timeStr}</span></li>`;
         }
         return '<li><span>' + item.name + '</span><span>&times; ' + (item.qty || item.quantity || 1) + '</span></li>';
-&lt;div class="card-header cancelled"&gt;&lt;div class="card-title"&gt;&lt;span&gt;${location}&lt;/span&gt;&lt;i class="fas fa-ban"&gt;&lt;/i&gt;&lt;/div&gt;&lt;div class="timestamp" data-time="${order.cancelledAt || order.timestamp}"&gt;Cancelled: ${new Date(order.cancelledAt || order.timestamp).toLocaleString()} &lt;span class="time-ago"&gt;(${formatRelativeTime(order.cancelledAt || order.timestamp)})&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;
+    }).join('');
     const location = order.tableNumber || order.landmark || order.roomNumber || ("Order #" + order.id.slice(-6));
+    const timestamp = order.cancelledAt || order.timestamp;
     return `
         <div class="data-card">
-            <div class="card-header cancelled"><div class="card-title"><span>${location}</span><i class="fas fa-ban"></i></div><div class="timestamp">Cancelled: ${new Date(order.cancelledAt || order.timestamp).toLocaleString()}</div></div>
+            <div class="card-header cancelled">
+                <div class="card-title"><span>${location}</span><i class="fas fa-ban"></i></div>
+                <div class="timestamp" data-time="${timestamp}">
+                    Cancelled: ${new Date(timestamp).toLocaleString()} <span class="time-ago">(${formatRelativeTime(timestamp)})</span>
+                </div>
+            </div>
             <div class="card-body">
                 <ul class="item-list">${orderItems || '<li>No items in this order</li>'}</ul>
                 <div class="price-info"><div class="total-price cancelled"><span>Lost Value:</span><span>Rs ${order.calculatedTotal.toFixed(2)}</span></div></div>
@@ -202,14 +208,19 @@ const createSaleCard = (order) => {
     const orderItems = (order.items || [ ]).map(item => {
         if (item.isDivider) {
              const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "New Batch";
-&lt;div class="card-header sales"&gt;&lt;div class="card-title"&gt;&lt;span&gt;${location}&lt;/span&gt;&lt;i class="fas fa-receipt"&gt;&lt;/i&gt;&lt;/div&gt;&lt;div class="timestamp" data-time="${order.timestamp}"&gt;${new Date(order.timestamp).toLocaleString()} &lt;span class="time-ago"&gt;(${formatRelativeTime(order.timestamp)})&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;
+             return `<li class="item-divider"><span class="divider-label">Added at ${timeStr}</span></li>`;
         }
         return '<li><span>' + item.name + '</span><span>&times; ' + (item.qty || item.quantity || 1) + '</span></li>';
     }).join('');
     const location = order.tableNumber || order.landmark || order.roomNumber || ("Order #" + order.id.slice(-6));
     return `
         <div class="data-card">
-            <div class="card-header sales"><div class="card-title"><span>${location}</span><i class="fas fa-receipt"></i></div><div class="timestamp">${new Date(order.timestamp).toLocaleString()}</div></div>
+            <div class="card-header sales">
+                <div class="card-title"><span>${location}</span><i class="fas fa-receipt"></i></div>
+                <div class="timestamp" data-time="${order.timestamp}">
+                    ${new Date(order.timestamp).toLocaleString()} <span class="time-ago">(${formatRelativeTime(order.timestamp)})</span>
+                </div>
+            </div>
             <div class="card-body">
                 <ul class="item-list">${orderItems || '<li>No items in this order</li>'}</ul>
                 <div class="price-info"><div class="total-price sales"><span>Total Sale:</span><span>Rs ${order.calculatedTotal.toFixed(2)}</span></div></div>
@@ -243,30 +254,30 @@ const setView = (view) => {
     let placeholder = 'Search sales...';
     if (view === 'cancelled') placeholder = 'Search cancelled orders...';
     else if (view === 'imports') placeholder = 'Search inventory...';
-document.getElementById('searchBox').addEventListener('input', applyFilters);
-    document.getElementById('timeFilter').addEventListener('change', applyFilters);
-    document.getElementById('sortOrder').addEventListener('change', applyFilters);
+    
+    document.getElementById('searchBox').placeholder = placeholder;
+    applyFilters();
+};
 
-    setInterval(() =&gt; {
-        document.querySelectorAll('.timestamp').forEach(el =&gt; {
-            if (!el.dataset.time) return;
-            const time = el.dataset.time;
-            const relative = formatRelativeTime(time);
-            const relativeSpan = el.querySelector('.time-ago');
-            const prefix = el.innerText.includes('Cancelled:') ? 'Cancelled: ' : '';
-            const base = new Date(time).toLocaleString();
-            
-            if (relativeSpan) {
-                relativeSpan.textContent = `(${relative})`;
-            } else {
-                el.innerHTML = `${prefix}${base} &lt;span class="time-ago"&gt;(${relative})&lt;/span&gt;`;
-            }
-        });
-    }, 1000);
-});
+// Initialize Dashboard
+window.addEventListener('load', () => {
+    injectHeader('Dashboard.html');
     fetchAllData();
     
     document.getElementById('searchBox').addEventListener('input', applyFilters);
     document.getElementById('timeFilter').addEventListener('change', applyFilters);
     document.getElementById('sortOrder').addEventListener('change', applyFilters);
+
+    setInterval(() => {
+        document.querySelectorAll('.timestamp').forEach(el => {
+            if (!el.dataset.time) return;
+            const time = el.dataset.time;
+            const relative = formatRelativeTime(time);
+            const relativeSpan = el.querySelector('.time-ago');
+            
+            if (relativeSpan) {
+                relativeSpan.textContent = `(${relative})`;
+            }
+        });
+    }, 1000);
 });

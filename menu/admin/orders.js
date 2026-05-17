@@ -173,7 +173,7 @@ function renderAllOrders() {
             
             return `
             <li style="display:flex; align-items:center; gap:10px;">
-                <img src="${getImgUrl(i.name)}" style="width:35px; height:35px; border-radius:4px; object-fit:cover; background:#f0f2f5;" onerror="this.src='https://via.placeholder.com/35?text=%3F'">
+                <img src="${getImgUrl(i.name)}" style="width:35px; height:35px; border-radius:4px; object-fit:cover; background:#f0f2f5;" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=No+Image';">
                 <div style="flex:1;">
                     <div style="font-weight:600;">${i.name}</div>
                     <div style="font-size:0.75rem; color:var(--gray);">Rs ${price.toFixed(2)} &times; ${qty}</div>

@@ -8,9 +8,9 @@ const fConfig = {
   appId: "1:76562961838:web:4d18b2f79d7eb9fd88243f",
   measurementId: "G-VZC36FJC24"
 };
-// Obscured Cipher Data
-const _T_DATA = "luxaOgpc6Tkf6isDdWinBEUygQad7HFj9QIWL6U8IGzgeF880PJfQ01HNyg1FbHn__3b-hHHmUKJecv-DUkXDydlCm07Gf585QsfxONsja8gMHh25jH33ASPfMEd5qWAw8sf2LO7guUM5iTGEsbUvQ63kQmQBgxbH7Q96aEA7AoyRgJh-UFWiM0eLeugx4D7Jg-OqdeGavDYKnL1_uB9JmVzjijHwW4Ops7_5LEPJwzZ_PPktd5KdPoDTkgBNeEU0YJa0RY3nSZQKif0JdG2WBlNXgIPMOXkIaG4AI6SYJ9520rO_Qgf6-x9Y-zHz_fRgroglE2WDZFIQbwEyO9rHkvONuBLrxzNV7CbdfZ9af08x-Lj";
-const _T_NAMES = ["table 1","table 2","table 3","table 4","hall 1","hall 2","hall 3","cabin 1","cabin 2","cabin 3","cabin 4","cabin 5","cabin 6","cabin up","terrace","top","room 101","room 102","room 103","room 104","room 201","room 202","room 203"];
+
+const _D = "luxaOgpc6Tkf6isDdWinBEUygQad7HFj9QIWL6U8IGzgeF880PJfQ01HNyg1FbHn__3b-hHHmUKJecv-DUkXDydlCm07Gf585QsfxONsja8gMHh25jH33ASPfMEd5qWAw8sf2LO7guUM5iTGEsbUvQ63kQmQBgxbH7Q96aEA7AoyRgJh-UFWiM0eLeugx4D7Jg-OqdeGavDYKnL1_uB9JmVzjijHwW4Ops7_5LEPJwzZ_PPktd5KdPoDTkgBNeEU0YJa0RY3nSZQKif0JdG2WBlNXgIPMOXkIaG4AI6SYJ9520rO_Qgf6-x9Y-zHz_fRgroglE2WDZFIQbwEyO9rHkvONuBLrxzNV7CbdfZ9af08x-Lj";
+const _N = "table 1,table 2,table 3,table 4,hall 1,hall 2,hall 3,cabin 1,cabin 2,cabin 3,cabin 4,cabin 5,cabin 6,cabin up,terrace,top,room 101,room 102,room 103,room 104,room 201,room 202,room 203".split(',');
 
 let allItems = [ ], cart = [ ], orderType = 'local', tableNumber = 'General', _currentUser = null;
 const imageCache = { };
@@ -18,75 +18,61 @@ const imageCache = { };
 function initApp() {
     closeAll();
     localStorage.setItem('order_type', 'local');
-    
-    // 1. Secure Table Extraction (Ampersand-free logic)
     const q = window.location.search.substring(1);
     if (q) {
         if (q.length === 16) {
-            const idx = _T_DATA.indexOf(q);
-            if (idx !== -1) {
-                if (idx % 16 === 0) {
-                    localStorage.setItem('local_table', _T_NAMES[idx / 16]);
+            const i = _D.indexOf(q);
+            if (i !== -1) {
+                if (i % 16 === 0) {
+                    localStorage.setItem('local_table', _N[i / 16]);
                     window.history.replaceState(null, null, window.location.pathname);
                 }
             }
         }
     }
-    
+    tableNumber = localStorage.getItem('local_table') || 'General';
+    const td = document.getElementById('tableDisplay');
+    if (td) td.innerText = "Table: " + tableNumber;
     setTimeout(() => {
-        const loader = document.getElementById('loader');
-        if(loader) loader.style.display = 'none';
+        const l = document.getElementById('loader');
+        if (l) l.style.display = 'none';
     }, 1500);
-    
     try {
         if (!firebase.apps.length) firebase.initializeApp(fConfig);
         const auth = firebase.auth();
         const db = firebase.database();
-
-        // Listen for Auth changes and capture the user object immediately
         auth.onAuthStateChanged(user => {
-            console.log("Auth State:", user ? "Connected as " + user.uid : "Disconnected");
             _currentUser = user;
-            if(!user) {
-                auth.signInAnonymously().then(() => {
-                    // This will trigger onAuthStateChanged again
-                }).catch(err => {
-                    console.error("Auth Error:", err.code, err.message);
-                });
+            if (!user) {
+                auth.signInAnonymously().catch(err => console.error(err));
             } else {
-                // Ensure heartbeat starts IMMEDIATELY after auth
                 startHeartbeat(db, user.uid);
             }
             startListeners(db);
         });
     } catch (e) {
-        console.error("Firebase Initialization Error:", e);
-        document.getElementById('loader').style.display='none';
+        console.error(e);
+        const l = document.getElementById('loader');
+        if (l) l.style.display = 'none';
     }
 }
 
 function toggleDrawer(id) {
     const dr = document.getElementById(id);
     const ov = document.getElementById('overlay');
-    
-    if(dr.classList.contains('active')) {
+    if (dr.classList.contains('active')) {
         closeAll();
     } else {
-        // Close other drawers but keep overlay active
         document.querySelectorAll('.drawer').forEach(d => d.classList.remove('active'));
-        
         ov.classList.add('active');
         dr.classList.add('active');
-
-        // If opening registration, sync data
-        if(id === 'regDrawerStep1') {
-            const name = localStorage.getItem('order_name');
-            if(name) document.getElementById('regName').value = name;
-            
-            const phoneEl = document.getElementById('regPhone');
-            const landmarkEl = document.getElementById('regLandmark');
-            if(phoneEl) phoneEl.value = localStorage.getItem('local_phone') || '';
-            if(landmarkEl) landmarkEl.value = localStorage.getItem('local_landmark') || '';
+        if (id === 'regDrawerStep1') {
+            const n = localStorage.getItem('order_name');
+            if (n) document.getElementById('regName').value = n;
+            const p = document.getElementById('regPhone');
+            const l = document.getElementById('regLandmark');
+            if (p) p.value = localStorage.getItem('local_phone') || '';
+            if (l) l.value = localStorage.getItem('local_landmark') || '';
         }
     }
 }
@@ -94,13 +80,11 @@ function toggleDrawer(id) {
 function closeAll() {
     document.querySelectorAll('.drawer').forEach(d => d.classList.remove('active'));
     const ov = document.getElementById('overlay');
-    if(ov) ov.classList.remove('active');
+    if (ov) ov.classList.remove('active');
 }
 
 function startHeartbeat(db, uid) {
     const presenceRef = db.ref(`presence/local/${uid}`);
-    
-    // 1. Sync current cart and table on any change
     window.syncPresence = () => {
         if (!tableNumber || tableNumber === 'General') {
             tableNumber = localStorage.getItem('local_table') || 'General';
@@ -112,24 +96,16 @@ function startHeartbeat(db, uid) {
             lastSeen: firebase.database.ServerValue.TIMESTAMP
         });
     };
-
-    // 2. Initial presence - trigger immediately
     syncPresence();
-
-    // 3. Keep alive heartbeat
     setInterval(syncPresence, 5000);
-
-    // 4. Clean up on disconnect
     presenceRef.onDisconnect().remove();
 }
 
 function startListeners(db) {
-    // Fetch all menu items
     db.ref('menu').on('value', snap => {
         allItems = [ ];
         snap.forEach(c => {
-            const i = c.val();
-            allItems.push({id: c.key, ...i});
+            allItems.push({id: c.key, ...c.val()});
         });
         renderItems();
     });
@@ -137,44 +113,40 @@ function startListeners(db) {
 
 function renderItems() {
     const grid = document.getElementById('menuContent');
-    if(!grid) return;
-    
+    if (!grid) return;
     const search = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
-    
-    // STRICT FILTER: Type must be 'Hotel'
-    const filtered = allItems.filter(i => (i.type === 'Hotel') && i.name.toLowerCase().includes(search));
-    
+    const filtered = allItems.filter(i => {
+        if (i.type === 'Hotel') {
+            return i.name.toLowerCase().includes(search);
+        }
+        return false;
+    });
     grid.innerHTML = '';
-    if(!filtered.length) { 
+    if (!filtered.length) { 
         grid.innerHTML = '<div style="text-align:center; padding:3rem; opacity:0.5; grid-column: 1/-1;">No items found</div>'; 
         return; 
     }
-
     const categories = {};
     filtered.forEach(i => { if(!categories[i.category]) categories[i.category] = [ ]; categories[i.category].push(i); });
-
     Object.keys(categories).sort().forEach(cName => {
         const section = document.createElement('div');
         section.className = 'category-block';
         section.innerHTML = `<div class="category-title">${cName}</div><div class="product-grid"></div>`;
         grid.appendChild(section);
-
         categories[cName].forEach(item => {
             const isOut = item.status === 'out_of_stock';
-            // Simple price logic, ignoring complex grocery profit models
             let price = item.price; 
-            // If discount exists
-            if(item.discountPercent && new Date(item.discountExpiry) > new Date()) {
-                price = (item.price * (1 - item.discountPercent / 100));
+            if (item.discountPercent) {
+                if (new Date(item.discountExpiry) > new Date()) {
+                    price = (item.price * (1 - item.discountPercent / 100));
+                }
             }
-
             const cartItem = cart.find(ci => ci.id === item.id);
             const card = document.createElement('div');
             card.className = 'card reveal active';
             card.style.animation = 'fadeUp 0.6s ease-out backwards';
             card.style.animationDelay = (filtered.indexOf(item) * 0.05) + 's';
-            if(isOut) card.style.opacity = '0.6';
-
+            if (isOut) card.style.opacity = '0.6';
             card.innerHTML = `
                 <div class="img-container">
                     <div class="img-fallback"><i class="fas fa-utensils"></i></div>
@@ -197,20 +169,17 @@ function renderItems() {
                     </div>
                 </div>`;
             section.querySelector('.product-grid').appendChild(card);
-
-            // Optimized Image Loading with Cache
             const cleanName = item.name.replace(/\s+/g, '') + '.jpg';
             const img = document.getElementById(`img-${item.id}`);
-            
-            if(imageCache[item.id]) {
-                if(img) {
+            if (imageCache[item.id]) {
+                if (img) {
                     img.src = imageCache[item.id];
                     img.style.display = 'block';
                     img.previousElementSibling.style.display = 'none';
                 }
             } else {
                 firebase.storage().ref('images/' + cleanName).getDownloadURL().then(url => {
-                    if(img) {
+                    if (img) {
                         img.src = url;
                         img.style.display = 'block';
                         img.previousElementSibling.style.display = 'none';
@@ -225,10 +194,11 @@ function renderItems() {
 function addToCart(id) {
     const item = allItems.find(i => i.id === id);
     let p = item.price;
-    if(item.discountPercent && new Date(item.discountExpiry) > new Date()) {
-        p = (item.price * (1 - item.discountPercent / 100));
+    if (item.discountPercent) {
+        if (new Date(item.discountExpiry) > new Date()) {
+            p = (item.price * (1 - item.discountPercent / 100));
+        }
     }
-    
     cart.push({ id, name: item.name, price: p, qty: 1 });
     updateCartUI();
     renderItems();
@@ -236,28 +206,23 @@ function addToCart(id) {
 
 function updateQty(id, dir) {
     const idx = cart.findIndex(c => c.id === id);
-    if(idx === -1) return;
+    if (idx === -1) return;
     cart[idx].qty += dir;
-    if(cart[idx].qty <= 0) cart.splice(idx, 1);
+    if (cart[idx].qty <= 0) cart.splice(idx, 1);
     updateCartUI();
     renderItems();
 }
 
 function updateCartUI() {
-    // Sync with Firebase presence node if available
     if (window.syncPresence) window.syncPresence();
-
     let sub = 0;
     const list = document.getElementById('cartList');
-    if(!list) return;
-
+    if (!list) return;
     list.innerHTML = cart.length ? '' : '<div style="text-align:center; padding:2rem; opacity:0.5;">Basket is empty</div>';
-    
     cart.forEach(i => {
         const itemTotal = i.price * i.qty;
         sub += itemTotal;
         const imgUrl = imageCache[i.id] || '';
-        
         list.innerHTML += `
         <div class="cart-item-row">
             <div class="cart-item-img-container">
@@ -274,32 +239,24 @@ function updateCartUI() {
             </div>
         </div>`;
     });
-
     const totalEl = document.getElementById('mainTotal');
     const badge = document.getElementById('cartBadge');
-    
-    if(totalEl) totalEl.innerText = sub.toFixed(2);
-    if(badge) {
+    if (totalEl) totalEl.innerText = sub.toFixed(2);
+    if (badge) {
         badge.innerText = cart.length;
         badge.style.display = cart.length ? 'flex' : 'none';
     }
-    
-    // Update drawer totals
     document.getElementById('cartTotalDrawer').innerText = "Rs " + sub.toFixed(2);
 }
-
-// Location logic simplified to manual confirmation for now.
 
 function setOrderType(type) {
     orderType = type;
     localStorage.setItem('order_type', type);
-    
     const hotelFields = document.getElementById('hotelFields');
     const localFields = document.getElementById('localFields');
     const btnHotel = document.getElementById('btnHotel');
     const btnLocal = document.getElementById('btnLocal');
-    
-    if(type === 'hotel') {
+    if (type === 'hotel') {
         hotelFields.style.display = 'block';
         localFields.style.display = 'none';
         btnHotel.classList.add('active');
@@ -313,11 +270,10 @@ function setOrderType(type) {
 }
 
 function checkRegistration() {
-    if(!cart.length) return;
-    
-    const name = localStorage.getItem('order_name');
-    const phone = localStorage.getItem('local_phone');
-    if (!name || !phone) {
+    if (!cart.length) return;
+    const n = localStorage.getItem('order_name');
+    const p = localStorage.getItem('local_phone');
+    if (!n || !p) {
         toggleDrawer('regDrawerStep1');
     } else {
         toggleDrawer('confirmDrawer');
@@ -334,12 +290,10 @@ function showModal(title, text, type = 'info') {
     const tx = document.getElementById('modalText');
     const ic = document.getElementById('modalIcon');
     const icon = m.querySelector('i');
-
     t.innerText = title;
     tx.innerText = text;
     ic.className = 'modal-icon ' + (type === 'success' ? 'success' : '');
     icon.className = type === 'success' ? 'fas fa-check' : 'fas fa-info-circle';
-
     m.classList.add('active');
 }
 
@@ -348,9 +302,9 @@ function hideModal() {
 }
 
 function goToStep2() {
-    const name = document.getElementById('regName').value.trim();
-    const phone = document.getElementById('regPhone').value.trim();
-    if(!name || !phone) {
+    const n = document.getElementById('regName').value.trim();
+    const p = document.getElementById('regPhone').value.trim();
+    if (!n || !p) {
         return showModal("Required Info", "Please enter both your Full Name and Contact Number.");
     }
     toggleDrawer('regDrawerStep2');
@@ -365,35 +319,29 @@ function redirectToPartner() {
 }
 
 function saveReg() {
-    const name = document.getElementById('regName').value.trim();
-    const phone = document.getElementById('regPhone').value.trim();
-    const landmark = document.getElementById('regLandmark').value.trim();
-
-    if(!name || !phone) return showModal("Required Info", "Please enter your name and phone number.");
-    if(!landmark) return showModal("Required Info", "Please enter your nearest landmark.");
-    
-    localStorage.setItem('order_name', name);
+    const n = document.getElementById('regName').value.trim();
+    const p = document.getElementById('regPhone').value.trim();
+    const l = document.getElementById('regLandmark').value.trim();
+    if (!n || !p) return showModal("Required Info", "Please enter your name and phone number.");
+    if (!l) return showModal("Required Info", "Please enter your nearest landmark.");
+    localStorage.setItem('order_name', n);
     localStorage.setItem('order_type', 'online');
-    localStorage.setItem('local_phone', phone);
+    localStorage.setItem('local_phone', p);
     localStorage.setItem('local_area', 'Bharatpur 10');
-    localStorage.setItem('local_landmark', landmark);
-
+    localStorage.setItem('local_landmark', l);
     document.getElementById('confirmMsg').innerText = "Ready to confirm your delivery order?";
     document.getElementById('confirmSubMsg').innerText = "Our delivery partner will bring it to your doorstep.";
-    
     toggleDrawer('confirmDrawer');
 }
 
 function finalizeOrder() {
     const auth = firebase.auth();
     const user = auth.currentUser;
-    
-    if(!user) {
+    if (!user) {
         showModal("Connection Lost", "Please wait while we reconnect...", "info");
         auth.signInAnonymously().catch(err => showModal("Connection Error", err.message));
         return;
     }
-    
     const order = { 
         customerName: "Table " + tableNumber, 
         orderType: 'local',
@@ -404,15 +352,11 @@ function finalizeOrder() {
         status: 'Ordered', 
         timestamp: new Date().toISOString() 
     };
-
     const path = `orders/local/${user.uid}`;
-    
     firebase.database().ref(path).push(order).then(() => {
         showModal("Order Sent", "Your order has been received! We are preparing it for Table " + tableNumber, "success"); 
         cart = [ ]; 
-        // Clear presence cart immediately
         if (window.syncPresence) window.syncPresence();
-        
         updateCartUI(); 
         renderItems(); 
         closeAll();
@@ -422,7 +366,6 @@ function finalizeOrder() {
     });
 }
 
-// Global exposure for HTML onclicks
 window.initApp = initApp;
 window.toggleDrawer = toggleDrawer;
 window.closeAll = closeAll;
@@ -439,5 +382,4 @@ window.hideModal = hideModal;
 window.renderItems = renderItems;
 window.setOrderType = setOrderType;
 
-// Initialize
 document.addEventListener('DOMContentLoaded', initApp);

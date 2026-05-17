@@ -10,29 +10,33 @@ const usageRef = commonRefs.usageRecords;
 const menuRef = commonRefs.menu;
 
 const fetchAllData = async () => {
-    // Optimization: Limit orders and records to the most recent ones for initial load
-    // while keeping stats accurate. In a real production app, aggregates should be handled 
-    // by Firebase Cloud Functions, but here we can optimize by only fetching what we display.
     const [menuSnapshot, ordersSnapshot, importsSnapshot, usageSnapshot, cancelledSnapshot] = await Promise.all([
         menuRef.once('value'),
-        totalOrdersRef.limitToLast(500).once('value'), // Limit data transfer
+        totalOrdersRef.limitToLast(500).once('value'),
         importItemsRef.limitToLast(500).once('value'),
         usageRef.limitToLast(500).once('value'),
         cancelledOrdersRef.limitToLast(100).once('value')
     ]);
     
+    // Load Menu Cache first
+    menuCache = { };
+    menuSnapshot.forEach(child => {
+        const item = child.val();
+        menuCache[item.name] = { price: item.price || 0, startingValue: item.startingValue || 1 };
+    });
 
-    let cancelledCount = 0;
+    // Process Cancelled Orders
     allCancelled = [ ];
     if (cancelledSnapshot.exists()) {
         cancelledSnapshot.forEach(child => {
             const order = child.val();
             order.id = child.key;
             let orderTotal = 0;
-            if(order.items) {
-order.items.forEach(item => {
+            if (order.items) {
+                order.items.forEach(item => {
                     if (item.isDivider) return;
-                    const pricePerUnit = item.price !== undefined ? item.price : ((menuCache[item.name] || { [ ] }).price || 0) / ((menuCache[item.name] || { [ ] }).startingValue || 1);
+                    const meta = menuCache[item.name] || { };
+                    const pricePerUnit = item.price !== undefined ? item.price : (meta.price || 0) / (meta.startingValue || 1);
                     const qty = item.qty || item.quantity || 1;
                     orderTotal += pricePerUnit * qty;
                 });
@@ -40,34 +44,33 @@ order.items.forEach(item => {
             order.calculatedTotal = orderTotal;
             allCancelled.push(order);
         });
-        cancelledCount = allCancelled.length;
     }
-    document.getElementById('cancelledCount').textContent = `${cancelledCount} Orders`;
+    document.getElementById('cancelledCount').textContent = `${allCancelled.length} Orders`;
     
-    menuSnapshot.forEach(child => {
-        const item = child.val();
-        menuCache[item.name] = { price: item.price || 0, startingValue: item.startingValue || 1 };
-    });
-
+    // Process Sales (Completed Orders)
     let totalRevenue = 0;
     allOrders = [ ];
-    ordersSnapshot.forEach(child => {
-        const order = child.val();
-        order.id = child.key;
-        let orderTotal = 0;
-order.items.forEach(item => {
-                if (item.isDivider) return;
-                const pricePerUnit = item.price !== undefined ? item.price : ((menuCache[item.name] || { [ ] }).price || 0) / ((menuCache[item.name] || { [ ] }).startingValue || 1);
-                const qty = item.qty || item.quantity || 1;
-                orderTotal += pricePerUnit * qty;
-            });
-            });
-        }
-        order.calculatedTotal = orderTotal;
-        allOrders.push(order);
-        totalRevenue += orderTotal;
-    });
+    if (ordersSnapshot.exists()) {
+        ordersSnapshot.forEach(child => {
+            const order = child.val();
+            order.id = child.key;
+            let orderTotal = 0;
+            if (order.items) {
+                order.items.forEach(item => {
+                    if (item.isDivider) return;
+                    const meta = menuCache[item.name] || { };
+                    const pricePerUnit = item.price !== undefined ? item.price : (meta.price || 0) / (meta.startingValue || 1);
+                    const qty = item.qty || item.quantity || 1;
+                    orderTotal += pricePerUnit * qty;
+                });
+            }
+            order.calculatedTotal = orderTotal;
+            allOrders.push(order);
+            totalRevenue += orderTotal;
+        });
+    }
     
+    // Process Inventory
     const importsMap = new Map();
     let totalImportValue = 0;
     allImports = [ ];
@@ -139,15 +142,17 @@ const applyFilters = () => {
         else if (timeFilter === 'month') matchesTime = itemDate >= thisMonth;
         
         let matchesSearch = !searchTerm || (currentView === 'sales'
-            ? item.id.toLowerCase().includes(searchTerm) || (item.items && item.items.some(i => i.name.toLowerCase().includes(searchTerm)))
-            : item.name.toLowerCase().includes(searchTerm) || (item.type && item.type.toLowerCase().includes(searchTerm)));
+            ? item.id.toLowerCase().includes(searchTerm) || (item.items &amp;&amp; item.items.some(i => i.name &amp;&amp; i.name.toLowerCase().includes(searchTerm)))
+            : (item.name &amp;&amp; item.name.toLowerCase().includes(searchTerm)) || (item.type &amp;&amp; item.type.toLowerCase().includes(searchTerm)));
         
-        return matchesTime && matchesSearch;
+        return matchesTime &amp;&amp; matchesSearch;
     });
 
     filteredItems.sort((a, b) => {
-        if (sortOrder === 'newest') return b[timestampField] - a[timestampField];
-        if (sortOrder === 'oldest') return a[timestampField] - b[timestampField];
+        const valA = a[timestampField];
+        const valB = b[timestampField];
+        if (sortOrder === 'newest') return new Date(valB) - new Date(valA);
+        if (sortOrder === 'oldest') return new Date(valA) - new Date(valB);
         if (sortOrder === 'highest') return b[amountField] - a[amountField];
         if (sortOrder === 'lowest') return a[amountField] - b[amountField];
         return 0;
@@ -158,7 +163,7 @@ const applyFilters = () => {
 const renderContent = () => {
     const container = document.getElementById('dataContainer');
     if (filteredItems.length === 0) {
-        container.innerHTML = `<div class="empty-state"><i class="fas fa-filter"></i><h3>No Items Found</h3><p>Try changing your filters or view.</p></div>`;
+        container.innerHTML = `&lt;div class="empty-state"&gt;&lt;i class="fas fa-filter"&gt;&lt;/i&gt;&lt;h3&gt;No Items Found&lt;/h3&gt;&lt;p&gt;Try changing your filters or view.&lt;/p&gt;&lt;/div&gt;`;
         return;
     }
 

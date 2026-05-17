@@ -20,6 +20,47 @@ function parseDevice(ua) {
     return "Mobile/Tablet";
 }
 
+/**
+ * Formats relative time showing exactly two units (e.g. 1 hour 15 minutes old)
+ */
+function formatRelativeTime(timestamp) {
+    if (!timestamp) return "";
+    const diff = Math.max(0, Date.now() - new Date(timestamp).getTime());
+    
+    const units = [
+        { name: 'week', value: 7 * 24 * 60 * 60 * 1000 },
+        { name: 'day', value: 24 * 60 * 60 * 1000 },
+        { name: 'hour', value: 60 * 60 * 1000 },
+        { name: 'minute', value: 60 * 1000 },
+        { name: 'second', value: 1000 }
+    ];
+
+    let results = [ ];
+    let remaining = diff;
+
+    for (let i = 0; i < units.length; i++) {
+        const unit = units[i];
+        if (remaining >= unit.value) {
+            const count = Math.floor(remaining / unit.value);
+            results.push(`${count} ${unit.name}${count !== 1 ? 's' : ''}`);
+            remaining %= unit.value;
+            
+            // Get the next unit if it exists and has a value > 0
+            if (i + 1 < units.length) {
+                const nextUnit = units[i + 1];
+                const nextCount = Math.floor(remaining / nextUnit.value);
+                if (nextCount > 0) {
+                    results.push(`${nextCount} ${nextUnit.name}${nextCount !== 1 ? 's' : ''}`);
+                }
+            }
+            break;
+        }
+    }
+
+    if (results.length === 0) return "just now";
+    return results.join(' ') + " old";
+}
+
 // 1. Initial Menu Cache load
 menuRef.on('value', snap => {
     snap.forEach(child => {
@@ -193,7 +234,7 @@ function renderAllOrders() {
                         <span>${order.tableNumber || order.customerName || 'Guest'}</span>
                         <span style="font-size:0.7rem; color:var(--secondary); background:#eee; padding:2px 6px; border-radius:4px;">${order.type.toUpperCase()}</span>
                     </div>
-                    <div class="timestamp" data-time="${order.timestamp}">${new Date(order.timestamp).toLocaleString()}</div>
+                    <div class="timestamp" data-time="${order.timestamp}">${new Date(order.timestamp).toLocaleString()} <span class="time-ago">(${formatRelativeTime(order.timestamp)})</span></div>
                     <div class="device-id">
                         ${order.device ? `<div><i class="fas fa-mobile-alt"></i> ${parseDevice(order.device)}</div>` : ''}
                         ${order.phone ? `<div><i class="fas fa-phone"></i> ${order.phone}</div>` : ''}
@@ -341,13 +382,18 @@ function hideModal() {
 }
 
 setInterval(() => {
-    const now = Date.now();
     document.querySelectorAll('.timestamp').forEach(el => {
-        const t = new Date(el.dataset.time).getTime();
-        const m = Math.floor((now - t) / 60000);
-        el.innerHTML = `${new Date(t).toLocaleString()} <span style="color:#6c757d">(${m}m ago)</span>`;
+        if (!el.dataset.time) return;
+        const base = new Date(el.dataset.time).toLocaleString();
+        const relative = formatRelativeTime(el.dataset.time);
+        const relativeSpan = el.querySelector('.time-ago');
+        if (relativeSpan) {
+            relativeSpan.textContent = `(${relative})`;
+        } else {
+            el.innerHTML = `${base} <span class="time-ago">(${relative})</span>`;
+        }
     });
-}, 60000);
+}, 1000);
 
 window.addEventListener('load', () => {
     injectHeader('StaffOrder.html');

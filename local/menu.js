@@ -24,7 +24,7 @@ function initApp() {
     const query = window.location.search.substring(1);
     const idx = _T_DATA.indexOf(query);
     
-    if (query &amp;&amp; query.length === 16 &amp;&amp; idx !== -1 &amp;&amp; idx % 16 === 0) {
+if (query && query.length === 16 && idx !== -1 && idx % 16 === 0) {
         localStorage.setItem('local_table', _T_NAMES[idx / 16]);
         window.history.replaceState(null, null, window.location.pathname);
     }

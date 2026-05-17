@@ -1,7 +1,8 @@
 // Dashboard Logic
 let allOrders = [ ], allCancelled = [ ], allImports = [ ], filteredItems = [ ];
 let currentView = 'sales';
-let usageMap = { }, menuCache = { };
+let usageMap = { }; 
+let menuCache = { };
 
 const totalOrdersRef = commonRefs.totalOrders;
 const cancelledOrdersRef = commonRefs.cancelledOrders;
@@ -45,7 +46,7 @@ const fetchAllData = async () => {
             allCancelled.push(order);
         });
     }
-    document.getElementById('cancelledCount').textContent = `${allCancelled.length} Orders`;
+    document.getElementById('cancelledCount').textContent = allCancelled.length + " Orders";
     
     // Process Sales (Completed Orders)
     let totalRevenue = 0;
@@ -105,9 +106,9 @@ const fetchAllData = async () => {
 };
 
 const updateStats = (stats) => {
-    document.getElementById('totalRevenue').textContent = `Rs ${stats.totalRevenue.toFixed(2)}`;
-    document.getElementById('costOfUsed').textContent = `Rs ${stats.costOfUsed.toFixed(2)}`;
-    document.getElementById('inventoryValue').textContent = `Rs ${stats.inventoryValue.toFixed(2)}`;
+    document.getElementById('totalRevenue').textContent = "Rs " + stats.totalRevenue.toFixed(2);
+    document.getElementById('costOfUsed').textContent = "Rs " + stats.costOfUsed.toFixed(2);
+    document.getElementById('inventoryValue').textContent = "Rs " + stats.inventoryValue.toFixed(2);
 };
 
 const applyFilters = () => {
@@ -130,8 +131,10 @@ const applyFilters = () => {
         amountField = 'price';
     }
 
-    const now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const thisWeek = new Date(today); thisWeek.setDate(today.getDate() - today.getDay());
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const thisWeek = new Date(today); 
+    thisWeek.setDate(today.getDate() - today.getDay());
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     filteredItems = sourceData.filter(item => {
@@ -179,7 +182,7 @@ const renderContent = () => {
 const createCancelledCard = (order) => {
     const orderItems = (order.items || [ ]).map(item => {
         if (item.isDivider) return '<li class="item-divider"></li>';
-        return `<li><span>${item.name}</span><span>&times; ${item.qty || item.quantity || 1}</span></li>`;
+        return '<li><span>' + item.name + '</span><span>&times; ' + (item.qty || item.quantity || 1) + '</span></li>';
     }).join('');
     return `
         <div class="data-card">
@@ -194,7 +197,7 @@ const createCancelledCard = (order) => {
 const createSaleCard = (order) => {
     const orderItems = (order.items || [ ]).map(item => {
         if (item.isDivider) return '<li class="item-divider"></li>';
-        return `<li><span>${item.name}</span><span>&times; ${item.qty || item.quantity || 1}</span></li>`;
+        return '<li><span>' + item.name + '</span><span>&times; ' + (item.qty || item.quantity || 1) + '</span></li>';
     }).join('');
     return `
         <div class="data-card">

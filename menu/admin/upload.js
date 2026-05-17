@@ -29,12 +29,10 @@ const fetchMenuItems = () => {
         const items = [ ];
         snapshot.forEach((childSnapshot) => {
             const item = childSnapshot.val();
-            if (item.type === 'Hotel') {
-                items.push({
-                    name: item.name.replace(/\s+/g, ''),
-                    displayName: item.name
-                });
-            }
+            items.push({
+                name: item.name.replace(/\s+/g, ''),
+                displayName: item.name
+            });
         });
         
         // Sort items alphabetically
@@ -88,35 +86,17 @@ const showStatus = (message, type) => {
     setTimeout(() => { statusBar.style.display = 'none'; }, 5000);
 };
 
-const displayImages = async () => {
-    // 1. Fetch Hotel items first to build a filter map
-    const hotelItemSlugs = new Set();
-    const menuSnap = await database.ref('menu').once('value');
-    menuSnap.forEach(snap => {
-        const item = snap.val();
-        if (item.type === 'Hotel') {
-            hotelItemSlugs.add(item.name.replace(/\s+/g, '').toLowerCase());
-        }
-    });
-
+const displayImages = () => {
     const storageRef = storage.ref('images');
     storageRef.listAll().then((result) => {
         imageGallery.innerHTML = '';
-        
-        // Filter result.items based on our hotel slugs
-        const filteredItems = result.items.filter(imageRef => {
-            const nameWithoutExt = imageRef.name.split('.')[0].toLowerCase();
-            return hotelItemSlugs.has(nameWithoutExt);
-        });
-
-        if (filteredItems.length === 0) {
-            imageGallery.innerHTML = '<div class="empty-gallery" style="text-align:center; grid-column: 1/-1; padding: 3rem; opacity:0.5;"><i class="fas fa-image fa-3x"></i><p>No hotel-specific images found.</p></div>';
+        if (result.items.length === 0) {
+            imageGallery.innerHTML = '<div class="empty-gallery"><i class="fas fa-image fa-3x"></i><p>No images found. Upload some!</p></div>';
             imageCount.textContent = '0';
             return;
         }
-
-        imageCount.textContent = filteredItems.length;
-        filteredItems.forEach((imageRef) => {
+        imageCount.textContent = result.items.length;
+        result.items.forEach((imageRef) => {
             imageRef.getDownloadURL().then((url) => {
                 const imageItem = document.createElement('div');
                 imageItem.className = 'image-item';
@@ -134,14 +114,14 @@ const displayImages = async () => {
                 
                 imageItem.querySelector('.delete-button').addEventListener('click', (e) => {
                     e.stopPropagation();
-                    showConfirm('Delete Image?', 'Are you sure you want to permanently delete this image?', () => {
+                    if (confirm('Delete this image?')) {
                         storage.ref('images/' + imageRef.name).delete().then(() => {
                             imageItem.remove();
                             showToast('Image deleted successfully');
                             const currentCount = parseInt(imageCount.textContent) - 1;
                             imageCount.textContent = currentCount;
                         }).catch(err => showToast(err.message, 'error'));
-                    });
+                    }
                 });
                 imageGallery.appendChild(imageItem);
             });

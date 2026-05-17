@@ -34,9 +34,7 @@ const createSearchHandler = (inputId, suggestionsId, onSelectCallback) => {
             if (item.name.toLowerCase().includes(query)) allMatches.push({ ...item, key, type: 'raw', relevance: getRelevance(item.name, query) }); 
         });
         Object.entries(menuItemsData).forEach(([key, item]) => { 
-            if (item.type === 'Hotel' && item.name.toLowerCase().includes(query)) {
-                allMatches.push({ ...item, key, type: 'menu', relevance: getRelevance(item.name, query) }); 
-            }
+            if (item.name.toLowerCase().includes(query)) allMatches.push({ ...item, key, type: 'menu', relevance: getRelevance(item.name, query) }); 
         });
         
         allMatches.sort((a, b) => { 
@@ -83,20 +81,14 @@ const resetAddForm = (form) => {
 };
 
 const deleteRawMaterial = (key) => { 
-    showConfirm(
-        'Delete Raw Material?', 
-        'This will permanently remove the import record and all of its associated usage data. This action cannot be undone.', 
-        () => {
-            const updates = { }; 
-            updates[`/import_items/${key}`] = null; 
-            usageRef.orderByChild('importKey').equalTo(key).once('value', s => { 
-                s.forEach(c => { updates[`/usage_records/${c.key}`] = null; }); 
-                firebase.database().ref().update(updates)
-                    .then(() => showToast('Item and usage data deleted.', 'success'))
-                    .catch(err => showToast('Deletion failed: ' + err.message, 'error')); 
-            });
-        }
-    );
+    if(confirm('Delete Raw Material? This will remove the import and all usage data.')) {
+        const updates = { }; 
+        updates[`/import_items/${key}`] = null; 
+        usageRef.orderByChild('importKey').equalTo(key).once('value', s => { 
+            s.forEach(c => { updates[`/usage_records/${c.key}`] = null; }); 
+            firebase.database().ref().update(updates).then(() => showToast('Item deleted.', 'success')).catch(err => showToast('Deletion failed.', 'error')); 
+        }); 
+    }
 };
 
 const renderInventory = () => {
@@ -106,11 +98,8 @@ const renderInventory = () => {
     menuListEl.innerHTML = '<p class="no-results-message" style="display: none;">No matching menu items found.</p>';
     rawListEl.innerHTML = '<p class="no-results-message" style="display: none;">No matching raw materials found.</p>';
     
-    const sortedMenu = Object.entries(menuItemsData)
-        .filter(([_, item]) => item.type === 'Hotel')
-        .sort((a,b) => a[1].name.localeCompare(b[1].name));
-        
-    if (sortedMenu.length === 0) menuListEl.insertAdjacentHTML('afterbegin', '<p class="no-results-message">No hotel menu items defined.</p>');
+    const sortedMenu = Object.entries(menuItemsData).sort((a,b) => a[1].name.localeCompare(b[1].name));
+    if (sortedMenu.length === 0) menuListEl.insertAdjacentHTML('afterbegin', '<p class="no-results-message">No menu items defined.</p>');
     
     sortedMenu.forEach(([key, item]) => { 
         const stats = menuStatsMap[key] || { added: 0, used: 0 }; 

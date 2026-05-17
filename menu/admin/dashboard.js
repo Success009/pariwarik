@@ -21,16 +21,7 @@ const fetchAllData = async () => {
         cancelledOrdersRef.limitToLast(100).once('value')
     ]);
     
-    // 1. Populate menuCache FIRST so we can use it for calculations
-    menuCache = { };
-    if (menuSnapshot.exists()) {
-        menuSnapshot.forEach(child => {
-            const item = child.val();
-            menuCache[item.name] = { price: item.price || 0, startingValue: item.startingValue || 1 };
-        });
-    }
 
-    // 2. Process Cancelled Orders
     let cancelledCount = 0;
     allCancelled = [ ];
     if (cancelledSnapshot.exists()) {
@@ -39,9 +30,9 @@ const fetchAllData = async () => {
             order.id = child.key;
             let orderTotal = 0;
             if(order.items) {
-                order.items.forEach(item => {
-                    // Use price from order if available, else fall back to menuCache
-                    const pricePerUnit = item.price !== undefined ? item.price : ((menuCache[item.name] || { }).price || 0) / ((menuCache[item.name] || { }).startingValue || 1);
+order.items.forEach(item => {
+                    if (item.isDivider) return;
+                    const pricePerUnit = item.price !== undefined ? item.price : ((menuCache[item.name] || { [ ] }).price || 0) / ((menuCache[item.name] || { [ ] }).startingValue || 1);
                     const qty = item.qty || item.quantity || 1;
                     orderTotal += pricePerUnit * qty;
                 });
@@ -52,6 +43,11 @@ const fetchAllData = async () => {
         cancelledCount = allCancelled.length;
     }
     document.getElementById('cancelledCount').textContent = `${cancelledCount} Orders`;
+    
+    menuSnapshot.forEach(child => {
+        const item = child.val();
+        menuCache[item.name] = { price: item.price || 0, startingValue: item.startingValue || 1 };
+    });
 
     let totalRevenue = 0;
     allOrders = [ ];
@@ -59,11 +55,12 @@ const fetchAllData = async () => {
         const order = child.val();
         order.id = child.key;
         let orderTotal = 0;
-        if(order.items) {
-            order.items.forEach(item => {
-                const pricePerUnit = item.price !== undefined ? item.price : ((menuCache[item.name] || { }).price || 0) / ((menuCache[item.name] || { }).startingValue || 1);
+order.items.forEach(item => {
+                if (item.isDivider) return;
+                const pricePerUnit = item.price !== undefined ? item.price : ((menuCache[item.name] || { [ ] }).price || 0) / ((menuCache[item.name] || { [ ] }).startingValue || 1);
                 const qty = item.qty || item.quantity || 1;
                 orderTotal += pricePerUnit * qty;
+            });
             });
         }
         order.calculatedTotal = orderTotal;
@@ -175,18 +172,13 @@ const renderContent = () => {
 };
 
 const createCancelledCard = (order) => {
-    const orderItems = (order.items || [ ]).map(item => `<li><span>${item.name}</span><span>&times; ${item.qty || item.quantity || 1}</span></li>`).join('');
-    const typeLabel = order.orderType === 'online' ? 'ONLINE' : (order.orderType === 'hotel' ? 'HOTEL' : 'OTHER');
+    const orderItems = (order.items || [ ]).map(item => {
+        if (item.isDivider) return '&lt;li class="item-divider"&gt;&lt;/li&gt;';
+        return `&lt;li&gt;&lt;span&gt;${item.name}&lt;/span&gt;&lt;span&gt;&amp;times; ${item.qty || item.quantity || 1}&lt;/span&gt;&lt;/li&gt;`;
+    }).join('');
     return `
         <div class="data-card">
-            <div class="card-header cancelled">
-                <div class="card-title">
-                    <span>Order #${order.id.slice(-6)}</span>
-                    <span style="font-size: 0.65rem; background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 4px; margin-left: 10px;">${typeLabel}</span>
-                    <i class="fas fa-ban" style="margin-left: auto;"></i>
-                </div>
-                <div class="timestamp">Cancelled: ${new Date(order.cancelledAt || order.timestamp).toLocaleString()}</div>
-            </div>
+            <div class="card-header cancelled"><div class="card-title"><span>Order #${order.id.slice(-6)}</span><i class="fas fa-ban"></i></div><div class="timestamp">Cancelled: ${new Date(order.cancelledAt || order.timestamp).toLocaleString()}</div></div>
             <div class="card-body">
                 <ul class="item-list">${orderItems || '<li>No items in this order</li>'}</ul>
                 <div class="price-info"><div class="total-price cancelled"><span>Lost Value:</span><span>Rs ${order.calculatedTotal.toFixed(2)}</span></div></div>
@@ -195,18 +187,13 @@ const createCancelledCard = (order) => {
 };
 
 const createSaleCard = (order) => {
-    const orderItems = (order.items || [ ]).map(item => `<li><span>${item.name}</span><span>&times; ${item.qty || item.quantity || 1}</span></li>`).join('');
-    const typeLabel = order.orderType === 'online' ? 'ONLINE' : (order.orderType === 'hotel' ? 'HOTEL' : 'OTHER');
+    const orderItems = (order.items || [ ]).map(item => {
+        if (item.isDivider) return '&lt;li class="item-divider"&gt;&lt;/li&gt;';
+        return `&lt;li&gt;&lt;span&gt;${item.name}&lt;/span&gt;&lt;span&gt;&amp;times; ${item.qty || item.quantity || 1}&lt;/span&gt;&lt;/li&gt;`;
+    }).join('');
     return `
         <div class="data-card">
-            <div class="card-header sales">
-                <div class="card-title">
-                    <span>Order #${order.id.slice(-6)}</span>
-                    <span style="font-size: 0.65rem; background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 4px; margin-left: 10px;">${typeLabel}</span>
-                    <i class="fas fa-receipt" style="margin-left: auto;"></i>
-                </div>
-                <div class="timestamp">${new Date(order.timestamp).toLocaleString()}</div>
-            </div>
+            <div class="card-header sales"><div class="card-title"><span>Order #${order.id.slice(-6)}</span><i class="fas fa-receipt"></i></div><div class="timestamp">${new Date(order.timestamp).toLocaleString()}</div></div>
             <div class="card-body">
                 <ul class="item-list">${orderItems || '<li>No items in this order</li>'}</ul>
                 <div class="price-info"><div class="total-price sales"><span>Total Sale:</span><span>Rs ${order.calculatedTotal.toFixed(2)}</span></div></div>

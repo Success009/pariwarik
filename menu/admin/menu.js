@@ -198,15 +198,11 @@ function toggleStatus(id, current) {
 }
 
 function deleteItem(id) {
-    showConfirm(
-        'Delete Menu Item?',
-        'Are you sure you want to permanently delete this item? This action cannot be undone.',
-        () => {
-            menuRef.child(id).remove()
-                .then(() => showToast('Item deleted successfully.'))
-                .catch(err => showToast('Error: ' + err.message, 'error'));
-        }
-    );
+    if(confirm('Are you sure you want to delete this item permanently?')) {
+        menuRef.child(id).remove()
+            .then(() => showToast('Item deleted'))
+            .catch(err => showToast(err.message, 'error'));
+    }
 }
 
 // Category Management

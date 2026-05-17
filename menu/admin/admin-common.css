@@ -94,38 +94,6 @@ body { background-color: #f4f7fe; color: var(--dark); line-height: 1.6; }
 .btn-warning { background: var(--warning); color: var(--dark); }
 .btn-danger { background: var(--danger); color: white; }
 
-/* Custom Modal */
-.custom-modal { 
-    display: none; 
-    position: fixed; 
-    inset: 0; 
-    background: rgba(0, 0, 0, 0.6); 
-    z-index: 2000; 
-    justify-content: center; 
-    align-items: center; 
-    backdrop-filter: blur(4px); 
-    animation: fadeIn 0.2s ease;
-}
-.custom-modal.active { display: flex; }
-.custom-modal-content { 
-    background: white; 
-    padding: 2rem; 
-    border-radius: var(--radius-lg); 
-    width: 90%; 
-    max-width: 450px; 
-    text-align: center; 
-    position: relative; 
-    transform: scale(0.95);
-    opacity: 0;
-    transition: var(--transition);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.2); 
-}
-.custom-modal.active .custom-modal-content { transform: scale(1); opacity: 1; }
-.modal-icon { font-size: 48px; margin-bottom: 1rem; color: var(--primary); }
-.modal-title { font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--dark); font-weight: 800; }
-.modal-message { margin-bottom: 1.5rem; color: var(--gray); font-weight: 500; line-height: 1.5; }
-.modal-actions { display: flex; justify-content: center; gap: 0.75rem; }
-
 /* Toast Notifications */
 .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 3000; }
 .toast { 

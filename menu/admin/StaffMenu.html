@@ -60,6 +60,9 @@
                 <input type="text" id="searchInput" class="search-input" placeholder="Search menu items..." oninput="filterItems()">
             </div>
             <div class="action-btns">
+                <button class="btn btn-warning" onclick="openModal('reorderModal')">
+                    <i class="fas fa-sort"></i> Rearrange Categories
+                </button>
                 <button class="btn btn-primary" onclick="openModal('itemModal')">
                     <i class="fas fa-plus"></i> Add New Item
                 </button>
@@ -131,6 +134,41 @@
             </form>
         </div>
     </div>
+
+    <!-- Reorder Modal -->
+    <div id="reorderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Rearrange Categories</h2>
+                <button class="close-btn" onclick="closeModal('reorderModal')">×</button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--gray); margin-bottom: 1rem;">Drag categories to reorder them.</p>
+            <ul id="reorderList" style="list-style: none; padding: 0; margin-bottom: 1.5rem;">
+                <!-- Categories will be injected here -->
+            </ul>
+            <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn" style="background: #eee;" onclick="closeModal('reorderModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveCategoryOrder()">Save Order</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .reorder-item {
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: 0.2s;
+        }
+        .reorder-item:hover { background: #fff; border-color: var(--primary); }
+        .reorder-item.dragging { opacity: 0.5; background: var(--primary-light); }
+    </style>
 
     <!-- Category Modal -->
     <div id="categoryModal" class="modal">

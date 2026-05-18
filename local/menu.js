@@ -12,7 +12,7 @@ const fConfig = {
 const _D = "luxaOgpc6Tkf6isDdWinBEUygQad7HFj9QIWL6U8IGzgeF880PJfQ01HNyg1FbHn__3b-hHHmUKJecv-DUkXDydlCm07Gf585QsfxONsja8gMHh25jH33ASPfMEd5qWAw8sf2LO7guUM5iTGEsbUvQ63kQmQBgxbH7Q96aEA7AoyRgJh-UFWiM0eLeugx4D7Jg-OqdeGavDYKnL1_uB9JmVzjijHwW4Ops7_5LEPJwzZ_PPktd5KdPoDTkgBNeEU0YJa0RY3nSZQKif0JdG2WBlNXgIPMOXkIaG4AI6SYJ9520rO_Qgf6-x9Y-zHz_fRgroglE2WDZFIQbwEyO9rHkvONuBLrxzNV7CbdfZ9af08x-Lj";
 const _N = "table 1,table 2,table 3,table 4,hall 1,hall 2,hall 3,cabin 1,cabin 2,cabin 3,cabin 4,cabin 5,cabin 6,cabin up,terrace,top,room 101,room 102,room 103,room 104,room 201,room 202,room 203".split(',');
 
-let allItems = [ ], cart = [ ], orderType = 'local', tableNumber = 'General', _currentUser = null;
+let allItems = [ ], cart = [ ], orderType = 'local', tableNumber = 'General', _currentUser = null, categoryOrder = [ ];
 const imageCache = { };
 
 function initApp() {
@@ -102,6 +102,11 @@ function startHeartbeat(db, uid) {
 }
 
 function startListeners(db) {
+    db.ref('settings/categoryOrder').on('value', snap => {
+        categoryOrder = snap.val() || [ ];
+        if (allItems.length > 0) renderItems();
+    });
+
     db.ref('menu').on('value', snap => {
         allItems = [ ];
         snap.forEach(c => {
@@ -126,9 +131,19 @@ function renderItems() {
         grid.innerHTML = '<div style="text-align:center; padding:3rem; opacity:0.5; grid-column: 1/-1;">No items found</div>'; 
         return; 
     }
-    const categories = {};
+    const categories = { };
     filtered.forEach(i => { if(!categories[i.category]) categories[i.category] = [ ]; categories[i.category].push(i); });
-    Object.keys(categories).sort().forEach(cName => {
+    
+    const sortedCats = Object.keys(categories).sort((a, b) => {
+        const indexA = categoryOrder.indexOf(a);
+        const indexB = categoryOrder.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.localeCompare(b);
+    });
+
+    sortedCats.forEach(cName => {
         const section = document.createElement('div');
         section.className = 'category-block';
         section.innerHTML = `<div class="category-title">${cName}</div><div class="product-grid"></div>`;

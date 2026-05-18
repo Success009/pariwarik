@@ -25,9 +25,11 @@ var commonRefs = {
     totalOrders: commonDB.ref('totalorders'),
     cancelledOrders: commonDB.ref('cancelled_orders'),
     importItems: commonDB.ref('import_items'),
-    usageRecords: commonDB.ref('usage_records'),
-    menuTransactions: commonDB.ref('menu_item_transactions')
+        usageRecords: commonDB.ref('usage_records'),
+    menuTransactions: commonDB.ref('menu_item_transactions'),
+    settings: commonDB.ref('settings')
 };
+    
 
 /**
  * Injects the standard admin header into the page.

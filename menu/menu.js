@@ -9,8 +9,8 @@ const fConfig = {
   measurementId: "G-VZC36FJC24"
 };
 
-let allItems = [ ], cart = [ ], orderType = 'online';
-const imageCache = {};
+let allItems = [ ], cart = [ ], orderType = 'online', categoryOrder = [ ];
+const imageCache = { };
 
 // Global auth state
 let _currentUser = null;
@@ -84,6 +84,12 @@ function closeAll() {
 }
 
 function startListeners(db) {
+    // Fetch category order settings
+    db.ref('settings/categoryOrder').on('value', snap => {
+        categoryOrder = snap.val() || [ ];
+        if (allItems.length > 0) renderItems();
+    });
+
     // Fetch all menu items
     db.ref('menu').on('value', snap => {
         allItems = [ ];
@@ -110,10 +116,19 @@ function renderItems() {
         return; 
     }
 
-    const categories = {};
+    const categories = { };
     filtered.forEach(i => { if(!categories[i.category]) categories[i.category] = [ ]; categories[i.category].push(i); });
 
-    Object.keys(categories).sort().forEach(cName => {
+    const sortedCats = Object.keys(categories).sort((a, b) => {
+        const indexA = categoryOrder.indexOf(a);
+        const indexB = categoryOrder.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.localeCompare(b);
+    });
+
+    sortedCats.forEach(cName => {
         const section = document.createElement('div');
         section.className = 'category-block';
         section.innerHTML = `<div class="category-title">${cName}</div><div class="product-grid"></div>`;

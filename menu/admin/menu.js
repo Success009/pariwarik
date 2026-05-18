@@ -2,22 +2,28 @@
 const menuRef = commonRefs.menu;
 let allItems = [ ];
 let categories = new Set();
+let categoryOrder = [ ];
 
 // Load Data
 let renderTimeout;
 function loadMenu() {
-    // Optimization: Use a single listener but debounce the render 
-    // to prevent UI freezing during rapid multiple updates
+    // Listen for category order
+    commonRefs.settings.child('categoryOrder').on('value', snap => {
+        categoryOrder = snap.val() || [ ];
+        if (allItems.length > 0) renderMenu();
+    });
+
     menuRef.on('value', snapshot => {
         allItems = [ ];
-        categories = new Set();
+        const currentCats = new Set();
         snapshot.forEach(child => {
             const item = child.val();
             if (item.type === 'Hotel') {
                 allItems.push({ id: child.key, ...item });
-                if(item.category) categories.add(item.category);
+                if(item.category) currentCats.add(item.category);
             }
         });
+        categories = currentCats;
         
         clearTimeout(renderTimeout);
         renderTimeout = setTimeout(() => {
@@ -49,7 +55,15 @@ function renderMenu() {
     });
 
     let html = '';
-    const sortedCats = Object.keys(grouped).sort();
+    // Sort categories based on stored order, then alphabetical for new ones
+    const sortedCats = Object.keys(grouped).sort((a, b) => {
+        const indexA = categoryOrder.indexOf(a);
+        const indexB = categoryOrder.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.localeCompare(b);
+    });
 
     if (sortedCats.length === 0) {
         container.innerHTML = `<div style="text-align:center; padding:5rem; opacity:0.5;"><h3>No items matching your search.</h3></div>`;
@@ -120,6 +134,8 @@ function openModal(id) {
         document.getElementById('itemId').value = '';
         document.getElementById('modalTitle').innerText = 'Add Menu Item';
         toggleCustomCategory('');
+    } else if (id === 'reorderModal') {
+        renderReorderList();
     }
 }
 
@@ -225,10 +241,85 @@ function performCategoryRename() {
         }
     });
 
-    menuRef.update(updates)
+    // Also update categoryOrder if it exists
+    const newOrder = categoryOrder.map(c => c === catToRename ? newName : c);
+    updates['settings/categoryOrder'] = newOrder;
+
+    // Use a multi-path update or separate updates. Since menuRef is 'menu/', 
+    // we should probably do them separately if they are in different roots, 
+    // but commonRefs.settings and commonRefs.menu are different.
+    
+    const db = firebase.database().ref();
+    const batchUpdates = { };
+    allItems.forEach(item => {
+        if(item.category === catToRename) {
+            batchUpdates[`menu/${item.id}/category`] = newName;
+        }
+    });
+    batchUpdates['settings/categoryOrder'] = newOrder;
+
+    db.update(batchUpdates)
         .then(() => {
             showToast('Category renamed successfully');
             closeModal('categoryModal');
+        })
+        .catch(err => showToast(err.message, 'error'));
+}
+
+function renderReorderList() {
+    const list = document.getElementById('reorderList');
+    const cats = Array.from(categories).sort((a, b) => {
+        const indexA = categoryOrder.indexOf(a);
+        const indexB = categoryOrder.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.localeCompare(b);
+    });
+
+    list.innerHTML = cats.map(cat => `
+        <li class="reorder-item" draggable="true" data-cat="${cat}">
+            <i class="fas fa-grip-lines" style="color: #ccc;"></i>
+            <span style="font-weight: 600;">${cat}</span>
+        </li>
+    `).join('');
+
+    setupDragAndDrop();
+}
+
+function setupDragAndDrop() {
+    const list = document.getElementById('reorderList');
+    const items = list.querySelectorAll('.reorder-item');
+
+    items.forEach(item => {
+        item.addEventListener('dragstart', () => {
+            setTimeout(() => item.classList.add('dragging'), 0);
+        });
+
+        item.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+        });
+    });
+
+    list.addEventListener('dragover', e => {
+        e.preventDefault();
+        const draggingItem = list.querySelector('.dragging');
+        const siblings = [...list.querySelectorAll('.reorder-item:not(.dragging)')];
+        const nextSibling = siblings.find(sibling => {
+            return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2;
+        });
+        list.insertBefore(draggingItem, nextSibling);
+    });
+}
+
+function saveCategoryOrder() {
+    const items = [...document.querySelectorAll('#reorderList .reorder-item')];
+    const newOrder = items.map(item => item.getAttribute('data-cat'));
+    
+    commonRefs.settings.child('categoryOrder').set(newOrder)
+        .then(() => {
+            showToast('Category order saved');
+            closeModal('reorderModal');
         })
         .catch(err => showToast(err.message, 'error'));
 }

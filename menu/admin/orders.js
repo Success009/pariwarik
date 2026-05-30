@@ -213,12 +213,15 @@ function renderAllOrders() {
                         </div>
                     </div>
                 </div>
-                <div class="card-footer">
+                <div class="card-footer" style="display:flex; flex-wrap:wrap; gap:0.5rem;">
                     ${order.status === 'Ordered' ? 
-                        `<button class="btn btn-primary" onclick="updateOrderStatus('${order.type}', '${order.userUid}', '${order.id}', 'Accepted')"><i class="fas fa-check"></i> Accept</button>` : 
-                        `<button class="btn btn-success" onclick="updateOrderStatus('${order.type}', '${order.userUid}', '${order.id}', 'Completed')"><i class="fas fa-flag-checkered"></i> Complete</button>`
+                        `<button class="btn btn-primary" style="flex:1;" onclick="updateOrderStatus('${order.type}', '${order.userUid}', '${order.id}', 'Accepted')"><i class="fas fa-check"></i> Accept</button>` : 
+                        `
+                        <button class="btn btn-success" style="flex:1;" onclick="updateOrderStatus('${order.type}', '${order.userUid}', '${order.id}', 'Completed')"><i class="fas fa-flag-checkered"></i> Complete</button>
+                        ${order.type === 'local' ? `<button class="btn btn-warning" style="flex:1; background-color:#8e44ad; border-color:#8e44ad; color:white;" onclick="openCreditModal('${order.id}', '${order.userUid}', ${total})"><i class="fas fa-credit-card"></i> Credit</button>` : ''}
+                        `
                     }
-                    <button class="btn btn-danger" onclick="updateOrderStatus('${order.type}', '${order.userUid}', '${order.id}', 'Cancelled')"><i class="fas fa-times-circle"></i> Cancel</button>
+                    <button class="btn btn-danger" style="flex:1; min-width:80px;" onclick="updateOrderStatus('${order.type}', '${order.userUid}', '${order.id}', 'Cancelled')"><i class="fas fa-times-circle"></i> Cancel</button>
                 </div>
             </div>`;
         orderSection.insertAdjacentHTML('beforeend', html);
@@ -353,6 +356,174 @@ setInterval(() => {
         }
     });
 }, 1000);
+
+// Credits Integration for Staff Order Management
+let creditPeople = [ ];
+let activeCreditOrder = null;
+
+// Real-time listener for credit customers
+firebase.database().ref('credits/people').on('value', snap => {
+    creditPeople = [ ];
+    if (snap.exists()) {
+        snap.forEach(child => {
+            const p = child.val();
+            p.id = child.key;
+            creditPeople.push(p);
+        });
+    }
+    updateCreditSelect();
+});
+
+function updateCreditSelect() {
+    const select = document.getElementById('creditPersonSelect');
+    if (!select) return;
+    
+    if (creditPeople.length === 0) {
+        select.innerHTML = '<option value="">-- No Customers Registered --</option>';
+        return;
+    }
+    
+    const sorted = [...creditPeople].sort((a, b) => a.name.localeCompare(b.name));
+    select.innerHTML = '<option value="">-- Select Existing Customer --</option>' + 
+        sorted.map(p => `<option value="${p.id}">${p.name} (Owed: Rs ${p.remainingCredit.toFixed(2)})</option>`).join('');
+}
+
+function openCreditModal(orderId, userUid, totalPrice) {
+    activeCreditOrder = {
+        orderId: orderId,
+        userUid: userUid,
+        totalPrice: totalPrice
+    };
+    
+    // Clear form inputs
+    const nameInput = document.getElementById('newPersonName');
+    const phoneInput = document.getElementById('newPersonPhone');
+    if (nameInput) nameInput.value = '';
+    if (phoneInput) phoneInput.value = '';
+    
+    updateCreditSelect();
+    
+    const m = document.getElementById('creditModal');
+    if (m) {
+        m.style.display = 'flex';
+        setTimeout(() => m.classList.add('active'), 10);
+    }
+}
+
+function closeCreditModal() {
+    const m = document.getElementById('creditModal');
+    if (m) {
+        m.classList.remove('active');
+        setTimeout(() => m.style.display = 'none', 300);
+    }
+    activeCreditOrder = null;
+}
+
+function submitOrderToCredit() {
+    if (!activeCreditOrder) return;
+    
+    const select = document.getElementById('creditPersonSelect');
+    const selectedPersonId = select ? select.value : '';
+    const newNameInput = document.getElementById('newPersonName');
+    const newPhoneInput = document.getElementById('newPersonPhone');
+    const newName = newNameInput ? newNameInput.value.trim() : '';
+    const newPhone = newPhoneInput ? newPhoneInput.value.trim() : '';
+    
+    let personId = selectedPersonId;
+    let personName = '';
+    
+    const orderDetails = allOrders[activeCreditOrder.orderId];
+    if (!orderDetails) {
+        showToast('Error: Order details not found', 'error');
+        return;
+    }
+    
+    const orderTotal = activeCreditOrder.totalPrice;
+    const db = firebase.database();
+    
+    const completeCreditAction = (finalPersonId, finalPersonName) => {
+        // Step 1. Save addition to credit balance
+        db.ref(`credits/people/${finalPersonId}/remainingCredit`).transaction(current => {
+            return (current || 0) + orderTotal;
+        }, (error, committed) => {
+            if (error) {
+                console.error(error);
+                showToast('Error adding credit balance', 'error');
+                return;
+            }
+            
+            if (committed) {
+                // Step 2. Log ledger transaction
+                const tx = {
+                    type: 'addition',
+                    amount: orderTotal,
+                    orderId: activeCreditOrder.orderId,
+                    items: orderDetails.items || [ ],
+                    timestamp: new Date().toISOString(),
+                    note: 'Food order added to credit'
+                };
+                
+                db.ref(`credits/transactions/${finalPersonId}`).push(tx)
+                    .then(() => {
+                        // Step 3. Mark the active order as Completed on credit
+                        const path = `orders/local/${activeCreditOrder.userUid}/${activeCreditOrder.orderId}`;
+                        db.ref(path).update({
+                            status: 'Completed',
+                            paymentType: 'credit',
+                            creditPersonId: finalPersonId
+                        }).then(() => {
+                            // Archive the completed order into totalorders
+                            db.ref(path).once('value', s => {
+                                if (s.exists()) {
+                                    const d = s.val();
+                                    d.completedAt = new Date().toISOString();
+                                    db.ref('totalorders').child(activeCreditOrder.orderId).set(d).then(() => {
+                                        db.ref(path).remove().then(() => {
+                                            showToast(`Order added to credit for ${finalPersonName}`);
+                                            closeCreditModal();
+                                        });
+                                    });
+                                }
+                            });
+                        });
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        showToast('Error creating credit ledger entry', 'error');
+                    });
+            }
+        });
+    };
+    
+    if (newName) {
+        // Create new credit profile first
+        const newPerson = {
+            name: newName,
+            phone: newPhone || null,
+            remainingCredit: 0,
+            createdAt: new Date().toISOString()
+        };
+        
+        db.ref('credits/people').push(newPerson).then(snap => {
+            personId = snap.key;
+            completeCreditAction(personId, newName);
+        }).catch(err => {
+            console.error(err);
+            showToast('Error registering customer account', 'error');
+        });
+    } else if (personId) {
+        const personObj = creditPeople.find(p => p.id === personId);
+        personName = personObj ? personObj.name : 'Customer';
+        completeCreditAction(personId, personName);
+    } else {
+        showToast('Please select a customer or enter a new customer name', 'warning');
+    }
+}
+
+// Global scope bindings for inline onclicks
+window.openCreditModal = openCreditModal;
+window.closeCreditModal = closeCreditModal;
+window.submitOrderToCredit = submitOrderToCredit;
 
 window.addEventListener('load', () => {
     injectHeader('StaffOrder.html');

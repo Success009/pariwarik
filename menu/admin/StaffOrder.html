@@ -72,6 +72,44 @@
         </div>
     </div>
 
+    <!-- Customer Credit Modal -->
+    <div class="custom-modal" id="creditModal">
+        <div class="modal-content" style="max-width: 450px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #f0f2f5; padding-bottom: 0.75rem;">
+                <h3 class="modal-title" style="margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--dark);"><i class="fas fa-credit-card" style="color:#8e44ad;"></i> Add Order to Credit</h3>
+                <button type="button" onclick="closeCreditModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--gray);">×</button>
+            </div>
+            
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--dark);">Select Credit Customer</label>
+                <select id="creditPersonSelect" style="width: 100%; padding: 12px; border-radius: var(--radius-md); border: 2px solid #e0e6ed; background-color: var(--white); font-weight: 500; font-size: 0.95rem;">
+                    <!-- Dynamically populated options -->
+                </select>
+            </div>
+            
+            <div style="display: flex; align-items: center; text-align: center; margin: 1.5rem 0; opacity: 0.8; width: 100%;">
+                <div style="flex: 1; border-bottom: 1px dashed var(--primary); opacity: 0.2; margin-right: .75em;"></div>
+                <span class="divider-label" style="font-size: 0.65rem; font-weight: 800; color: var(--primary); background: rgba(67, 97, 238, 0.08); padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">OR CREATE NEW CUSTOMER</span>
+                <div style="flex: 1; border-bottom: 1px dashed var(--primary); opacity: 0.2; margin-left: .75em;"></div>
+            </div>
+            
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--dark);">New Customer Name</label>
+                <input type="text" id="newPersonName" placeholder="Enter customer name" style="width: 100%; padding: 12px; border-radius: var(--radius-md); border: 2px solid #e0e6ed; font-weight: 500; font-size: 0.95rem;">
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--dark);">New Customer Phone (Optional)</label>
+                <input type="tel" id="newPersonPhone" placeholder="Enter phone number" style="width: 100%; padding: 12px; border-radius: var(--radius-md); border: 2px solid #e0e6ed; font-weight: 500; font-size: 0.95rem;">
+            </div>
+            
+            <div class="modal-actions" style="display: flex; gap: 0.75rem;">
+                <button type="button" class="modal-btn modal-btn-cancel" onclick="closeCreditModal()">Cancel</button>
+                <button type="button" class="modal-btn modal-btn-confirm" onclick="submitOrderToCredit()" style="background-color: #8e44ad; color: white;">Confirm Credit</button>
+            </div>
+        </div>
+    </div>
+
         <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>

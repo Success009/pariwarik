@@ -25,9 +25,11 @@ var commonRefs = {
     totalOrders: commonDB.ref('totalorders'),
     cancelledOrders: commonDB.ref('cancelled_orders'),
     importItems: commonDB.ref('import_items'),
-        usageRecords: commonDB.ref('usage_records'),
+    usageRecords: commonDB.ref('usage_records'),
     menuTransactions: commonDB.ref('menu_item_transactions'),
-    settings: commonDB.ref('settings')
+    settings: commonDB.ref('settings'),
+    creditsPeople: commonDB.ref('credits/people'),
+    creditsTransactions: commonDB.ref('credits/transactions')
 };
     
 
@@ -41,6 +43,7 @@ function injectHeader(activePage) {
         <nav class="header-nav">
             ${activePage === 'Dashboard.html' ? `<a href="Dashboard.html" class="nav-link active"><i class="fas fa-chart-pie"></i> Dashboard</a>` : ''}
             <a href="StaffOrder.html" class="nav-link ${activePage === 'StaffOrder.html' ? 'active' : ''}"><i class="fas fa-concierge-bell"></i> Orders</a>
+            <a href="StaffCredits.html" class="nav-link ${activePage === 'StaffCredits.html' ? 'active' : ''}"><i class="fas fa-credit-card"></i> Credits</a>
             <a href="StaffMenu.html" class="nav-link ${activePage === 'StaffMenu.html' ? 'active' : ''}"><i class="fas fa-book-open"></i> Menu</a>
             <a href="StaffUpload.html" class="nav-link ${activePage === 'StaffUpload.html' ? 'active' : ''}"><i class="fas fa-image"></i> Images</a>
             <a href="ImportProgram.html" class="nav-link ${activePage === 'ImportProgram.html' ? 'active' : ''}"><i class="fas fa-boxes"></i> Inventory</a>

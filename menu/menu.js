@@ -85,7 +85,7 @@ function closeAll() {
 
 function startListeners(db) {
     // Fetch category order settings
-    db.ref('settings/categoryOrder').on('value', snap => {
+    db.ref('menu/_categoryOrder').on('value', snap => {
         categoryOrder = snap.val() || [ ];
         if (allItems.length > 0) renderItems();
     });

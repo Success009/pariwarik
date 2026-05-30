@@ -8,7 +8,7 @@ let categoryOrder = [ ];
 let renderTimeout;
 function loadMenu() {
     // Listen for category order
-    commonRefs.settings.child('categoryOrder').on('value', snap => {
+    menuRef.child('_categoryOrder').on('value', snap => {
         categoryOrder = snap.val() || [ ];
         if (allItems.length > 0) renderMenu();
     });
@@ -243,11 +243,6 @@ function performCategoryRename() {
 
     // Also update categoryOrder if it exists
     const newOrder = categoryOrder.map(c => c === catToRename ? newName : c);
-    updates['settings/categoryOrder'] = newOrder;
-
-    // Use a multi-path update or separate updates. Since menuRef is 'menu/', 
-    // we should probably do them separately if they are in different roots, 
-    // but commonRefs.settings and commonRefs.menu are different.
     
     const db = firebase.database().ref();
     const batchUpdates = { };
@@ -256,7 +251,7 @@ function performCategoryRename() {
             batchUpdates[`menu/${item.id}/category`] = newName;
         }
     });
-    batchUpdates['settings/categoryOrder'] = newOrder;
+    batchUpdates['menu/_categoryOrder'] = newOrder;
 
     db.update(batchUpdates)
         .then(() => {
@@ -316,7 +311,7 @@ function saveCategoryOrder() {
     const items = [...document.querySelectorAll('#reorderList .reorder-item')];
     const newOrder = items.map(item => item.getAttribute('data-cat'));
     
-    commonRefs.settings.child('categoryOrder').set(newOrder)
+    commonRefs.menu.child('_categoryOrder').set(newOrder)
         .then(() => {
             showToast('Category order saved');
             closeModal('reorderModal');

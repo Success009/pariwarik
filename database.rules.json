@@ -1,0 +1,123 @@
+{
+  "rules": {
+    // --- UDAYASHREE SCHOOL APP RULES ---
+    "school": {
+      ".read": true,
+      ".write": true
+    },
+
+    // --- EXISTING PRODUCTION APP RULES (DO NOT MODIFY) ---
+    ".read": "auth != null && (root.child('admins').child(auth.uid).exists() || auth.token.firebase.sign_in_provider === 'password')",
+    ".write": "auth != null && (root.child('admins').child(auth.uid).exists() || auth.token.firebase.sign_in_provider === 'password')",
+    
+    "menu": {
+      ".read": true
+    },
+    
+    "admins": {
+    },
+
+    "account_requests": {
+      "$user_uid": {
+        ".write": "auth != null && auth.uid === $user_uid",
+        ".read": "auth != null && auth.uid === $user_uid"
+      }
+    },
+
+    "users": {
+      "$user_uid": {
+        ".read": "auth != null && auth.uid === $user_uid"
+      }
+    },
+
+    "orders": {
+      "grocery": {
+        "$user_uid": {
+          ".read": "auth != null && auth.uid === $user_uid",
+          ".write": "auth != null && auth.uid === $user_uid && root.child('users').child($user_uid).exists()"
+        }
+      },
+      "hotel": {
+        "$user_uid": {
+          ".read": "auth != null && auth.uid === $user_uid",
+          "$order_id": {
+             ".write": "auth != null && auth.uid === $user_uid && !data.exists()",
+             ".validate": "newData.hasChildren(['customerName', 'items'])"
+          }
+        }
+      },
+      "local": {
+        "$user_uid": {
+          ".read": "auth != null && auth.uid === $user_uid",
+          "$order_id": {
+             ".write": "auth != null && auth.uid === $user_uid && !data.exists()",
+             ".validate": "newData.hasChildren(['customerName', 'items'])"
+          }
+        }
+      },
+      "online": {
+        "$user_uid": {
+          ".read": "auth != null && auth.uid === $user_uid",
+          "$order_id": {
+             ".write": "auth != null && auth.uid === $user_uid && !data.exists()",
+             ".validate": "newData.hasChildren(['customerName', 'items'])"
+          }
+        }
+      }
+    },
+    "presence": {
+      "local": {
+        ".read": "auth != null && (root.child('admins').child(auth.uid).exists() || auth.token.firebase.sign_in_provider === 'password')",
+        "$user_uid": {
+          ".write": "auth != null && auth.uid === $user_uid",
+          ".read": "auth != null && auth.uid === $user_uid"
+        }
+      }
+    },
+
+    "userMessages": {
+      "$user_uid": {
+        ".write": "auth != null && auth.uid === $user_uid && root.child('users').child($user_uid).exists()",
+        ".read": "auth != null && auth.uid === $user_uid"
+      }
+    },
+
+    "adminMessages": {
+      "$user_uid": {
+        ".read": "auth != null && auth.uid === $user_uid"
+      }
+    },
+
+    "phone_registry": {
+      ".read": false
+    },
+
+    // --- BHARATPUR BAZAR APP NEW RULES ---
+    "bb_orders": {
+      "$user_uid": {
+        ".read": "auth != null && auth.uid === $user_uid",
+        "$order_id": {
+          ".write": "auth != null && auth.uid === $user_uid && !data.exists()",
+          ".validate": "newData.hasChildren(['username', 'items'])"
+        }
+      }
+    },
+    "bb_users": {
+      "$user_uid": {
+        ".write": "auth != null && auth.uid === $user_uid",
+        ".read": "auth != null"
+      }
+    },
+    "bb_userMessages": {
+      "$user_uid": {
+        ".write": "auth != null && auth.uid === $user_uid",
+        ".read": "auth != null && auth.uid === $user_uid"
+      }
+    },
+    "bb_adminMessages": {
+      "$user_uid": {
+        ".read": "auth != null && auth.uid === $user_uid"
+      }
+    }
+  }
+}

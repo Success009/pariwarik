@@ -16,8 +16,10 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="menu.css">
+    <!-- Custom CSS Modules -->
+    <link rel="stylesheet" href="css/menu-core.css">
+    <link rel="stylesheet" href="css/cart.css">
+    <link rel="stylesheet" href="css/order-flow.css">
 </head>
 <body>
 
@@ -112,13 +114,22 @@
             <i class="fas fa-times" onclick="closeAll()"></i>
         </div>
         <div class="drawer-body" style="padding: 25px; text-align: center; flex-direction: column; justify-content: center; display: flex;">
-            <i class="fas fa-map-marker-alt fa-3x text-primary" style="margin-bottom: 20px; color: var(--primary);"></i>
-            <h4 style="margin-bottom: 15px; font-family: var(--font-serif); font-size: 1.5rem;">Are you located in Bharatpur 10?</h4>
-            <p class="small text-muted" style="margin-bottom: 25px;">We currently offer delivery exclusively within Bharatpur 10.</p>
-            <div style="display: flex; gap: 15px; flex-direction: column;">
-                <button class="btn-confirm-red" onclick="goToStep3()">Yes, I am in Bharatpur 10</button>
-                <button class="btn btn-outline-primary w-100" style="padding: 14px; font-size: 0.85rem; border-radius: 50px;" onclick="redirectToPartner()">No, I am outside</button>
+            <i class="fas fa-map-marker-alt fa-3x text-primary" style="margin-bottom: 15px; color: var(--primary);"></i>
+            <h4 style="margin-bottom: 10px; font-family: var(--font-serif); font-size: 1.5rem;">Select your area</h4>
+            <p class="small text-muted" style="margin-bottom: 20px;">We currently offer delivery in Bharatpur 10.</p>
+            <div class="area-options-grid">
+                <button class="area-btn" onclick="selectArea('Chaubiskothi Area')">
+                    <i class="fas fa-road"></i>
+                    <span>Chaubiskothi Area</span>
+                </button>
+                <button class="area-btn" onclick="selectArea('CMC Area')">
+                    <i class="fas fa-hospital-alt"></i>
+                    <span>CMC Area</span>
+                </button>
             </div>
+            <button class="area-btn-secondary w-100" onclick="selectSomewhereElse()">
+                <i class="fas fa-globe"></i>Somewhere Else
+            </button>
         </div>
     </div>
 
@@ -168,5 +179,7 @@
         </div>
     </div>
 
-    <!-- Custom JS -->
-    <script src="menu.js"></script>
+    <!-- Custom JS Modules -->
+    <script src="js/menu-core.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/order-flow.js"></script>

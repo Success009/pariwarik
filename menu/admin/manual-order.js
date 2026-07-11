@@ -291,6 +291,7 @@ function getOrderPayload(status) {
     };
 }
 
+
 // Option A: Active Order Sent to Kitchen (shows up under active orders/local)
 function submitActiveOrder() {
     if (cart.length === 0) {
@@ -298,12 +299,12 @@ function submitActiveOrder() {
         return;
     }
 
-    const payload = getOrderPayload('Accepted'); // Starts as Accepted directly so kitchen staff knows to prepare
+    const payload = getOrderPayload('Ordered'); // Starts as 'Ordered' so it behaves exactly like a fresh local table order
     const orderId = db.ref().child('orders/local/manual_order').push().key;
     
     db.ref(`orders/local/manual_order/${orderId}`).set(payload)
         .then(() => {
-            showToast('Order successfully sent to kitchen!');
+            showToast('Order successfully sent to incoming orders!');
             clearCart();
         })
         .catch(err => {
@@ -311,7 +312,7 @@ function submitActiveOrder() {
             showToast('Error saving order', 'error');
         });
 }
-
+  
 // Option B: Complete Direct Order (Paid in Cash, goes straight to totalorders)
 function submitCompletedDirectOrder() {
     if (cart.length === 0) {

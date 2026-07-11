@@ -14,21 +14,15 @@
             margin-top: 1rem;
         }
 
-        @media (max-width: 992px) {
-            .order-builder-container {
-                grid-template-columns: 1fr;
-            }
-        }
-
         /* Left Side: Menu Builder */
         .menu-builder {
             background-color: var(--white);
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow);
-            padding: 1.5rem;
+            padding: 1.25rem;
             display: flex;
             flex-direction: column;
-            gap: 1.25rem;
+            gap: 1rem;
         }
 
         .controls-row {
@@ -41,7 +35,7 @@
         .search-wrapper {
             flex: 1;
             position: relative;
-            min-width: 250px;
+            min-width: 200px;
         }
 
         .search-wrapper i {
@@ -54,10 +48,10 @@
 
         .search-input {
             width: 100%;
-            padding: 12px 12px 12px 40px;
+            padding: 10px 10px 10px 36px;
             border-radius: var(--radius-md);
             border: 2px solid #e0e6ed;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 500;
             transition: var(--transition);
         }
@@ -69,7 +63,7 @@
 
         .category-tabs {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.4rem;
             overflow-x: auto;
             padding-bottom: 5px;
             width: 100%;
@@ -85,10 +79,10 @@
         }
 
         .cat-tab {
-            padding: 8px 16px;
+            padding: 6px 12px;
             background: #f0f2f5;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
             white-space: nowrap;
@@ -102,10 +96,11 @@
             color: white;
         }
 
+        /* Compact Grid of Menu Cards */
         .items-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 1.25rem;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 0.75rem;
         }
 
         .item-card {
@@ -118,17 +113,18 @@
             transition: var(--transition);
             position: relative;
             user-select: none;
+            cursor: pointer;
         }
 
         .item-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
 
         .item-card-img-wrapper {
             position: relative;
             width: 100%;
-            height: 120px;
+            height: 90px;
             background: #f8f9fa;
         }
 
@@ -140,30 +136,35 @@
 
         .item-card-badge {
             position: absolute;
-            top: 8px;
-            right: 8px;
+            top: 4px;
+            right: 4px;
             background: rgba(0,0,0,0.6);
             color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.7rem;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 0.6rem;
             font-weight: 700;
         }
 
         .item-card-info {
-            padding: 0.75rem;
+            padding: 0.5rem;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             flex: 1;
-            gap: 0.5rem;
+            gap: 0.25rem;
         }
 
         .item-card-name {
-            font-size: 0.95rem;
+            font-size: 0.82rem;
             font-weight: 700;
             color: var(--dark);
-            line-height: 1.3;
+            line-height: 1.2;
+            height: 2rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .item-card-price-row {
@@ -175,21 +176,22 @@
         .item-card-price {
             font-weight: 800;
             color: var(--primary);
-            font-size: 1rem;
+            font-size: 0.85rem;
         }
 
         .btn-add-item {
             background: rgba(67, 97, 238, 0.08);
             color: var(--primary);
             border: none;
-            width: 32px;
-            height: 32px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: var(--transition);
+            font-size: 0.75rem;
         }
 
         .btn-add-item:hover {
@@ -202,12 +204,12 @@
             background-color: var(--white);
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow);
-            padding: 1.5rem;
+            padding: 1.25rem;
             display: flex;
             flex-direction: column;
-            max-height: calc(100vh - 120px);
+            max-height: calc(100vh - 110px);
             position: sticky;
-            top: 90px;
+            top: 85px;
         }
 
         .cart-title-row {
@@ -215,17 +217,17 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #f0f2f5;
-            padding-bottom: 0.75rem;
-            margin-bottom: 1rem;
+            padding-bottom: 0.6rem;
+            margin-bottom: 0.75rem;
         }
 
         .cart-title {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 800;
             color: var(--dark);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .btn-clear-cart {
@@ -245,23 +247,23 @@
         }
 
         .cart-form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
         }
 
         .cart-label {
             display: block;
             font-weight: 700;
-            font-size: 0.85rem;
-            margin-bottom: 0.4rem;
+            font-size: 0.8rem;
+            margin-bottom: 0.3rem;
             color: var(--dark);
         }
 
         .cart-select, .cart-input {
             width: 100%;
-            padding: 10px 12px;
+            padding: 8px 10px;
             border-radius: var(--radius-md);
             border: 2px solid #e0e6ed;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 500;
             transition: var(--transition);
             background-color: white;
@@ -276,7 +278,7 @@
             list-style: none;
             flex: 1;
             overflow-y: auto;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
             padding-right: 4px;
         }
 
@@ -292,15 +294,15 @@
         .cart-item {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.6rem 0;
+            gap: 0.6rem;
+            padding: 0.5rem 0;
             border-bottom: 1px dashed #f0f2f5;
         }
 
         .cart-item-img {
-            width: 40px;
-            height: 40px;
-            border-radius: 6px;
+            width: 35px;
+            height: 35px;
+            border-radius: 4px;
             object-fit: cover;
             background: #f8f9fa;
         }
@@ -311,23 +313,23 @@
 
         .cart-item-name {
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--dark);
             line-height: 1.2;
             margin-bottom: 2px;
         }
 
         .cart-item-price {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--gray);
         }
 
         .cart-qty-controls {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
             background: #f0f2f5;
-            padding: 4px 8px;
+            padding: 3px 6px;
             border-radius: 20px;
         }
 
@@ -335,8 +337,8 @@
             background: none;
             border: none;
             cursor: pointer;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -351,9 +353,9 @@
         }
 
         .cart-qty-val {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 700;
-            min-width: 15px;
+            min-width: 12px;
             text-align: center;
         }
 
@@ -362,22 +364,22 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
             flex: 1;
             color: var(--gray);
             opacity: 0.7;
             text-align: center;
-            padding: 2rem;
+            padding: 1.5rem;
         }
 
         .cart-empty-state i {
-            font-size: 2.5rem;
+            font-size: 2rem;
         }
 
         .cart-summary-block {
             border-top: 2px solid #f0f2f5;
-            padding-top: 1rem;
-            margin-bottom: 1rem;
+            padding-top: 0.75rem;
+            margin-bottom: 0.75rem;
         }
 
         .cart-summary-row {
@@ -386,25 +388,90 @@
             align-items: center;
             font-weight: 800;
             color: var(--dark);
-            font-size: 1.15rem;
+            font-size: 1.05rem;
         }
 
         .cart-actions {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.4rem;
         }
 
         .cart-actions .btn {
             width: 100%;
             justify-content: center;
-            padding: 10px;
-            font-size: 0.85rem;
+            padding: 8px;
+            font-size: 0.8rem;
+            border-radius: var(--radius-md);
         }
 
         .btn-active-order { background-color: var(--primary); color: white; }
         .btn-completed-order { background-color: var(--success); color: white; }
         .btn-credit-order { background-color: #8e44ad; color: white; }
+
+        /* Floating Cart Button for Mobile Screens */
+        .cart-floating-btn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 30px;
+            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+            font-weight: 700;
+            font-size: 0.95rem;
+            z-index: 1500;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .cart-floating-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(67, 97, 238, 0.4);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 992px) {
+            .order-builder-container {
+                grid-template-columns: 1fr;
+            }
+            .cart-floating-btn {
+                display: inline-flex;
+            }
+            .cart-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 1550;
+                backdrop-filter: blur(2px);
+            }
+            .cart-overlay.active {
+                display: block;
+            }
+            .cart-wrapper {
+                position: fixed;
+                inset: auto 0 0 0;
+                height: 75vh;
+                max-height: 75vh;
+                z-index: 1600;
+                transform: translateY(100%);
+                transition: var(--transition);
+                border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+                box-shadow: 0 -10px 30px rgba(0,0,0,0.15);
+            }
+            .cart-wrapper.active {
+                transform: translateY(0);
+            }
+            #closeCartDrawerBtn {
+                display: inline-block !important;
+            }
+        }
 
         /* Modals and Overlays */
         .custom-modal {
@@ -420,10 +487,10 @@
 
         .modal-content {
             background: white;
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: var(--radius-lg);
             width: 90%;
-            max-width: 450px;
+            max-width: 420px;
             text-align: left;
             position: relative;
             transform: translateY(-20px);
@@ -438,8 +505,8 @@
         }
 
         .modal-title {
-            font-size: 1.3rem;
-            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            margin-bottom: 1.25rem;
             color: var(--dark);
             font-weight: 800;
             display: flex;
@@ -449,19 +516,19 @@
 
         .modal-actions {
             display: flex;
-            gap: 0.75rem;
-            margin-top: 1.5rem;
+            gap: 0.6rem;
+            margin-top: 1.25rem;
         }
 
         .modal-btn {
-            padding: 12px 24px;
+            padding: 10px 20px;
             border-radius: var(--radius-md);
             border: none;
             cursor: pointer;
             font-weight: 700;
             transition: var(--transition);
             flex: 1;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             text-align: center;
         }
 
@@ -469,7 +536,7 @@
         .modal-btn-cancel { background: #f0f2f5; color: var(--dark); }
 
         .divider-label {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: 800;
             color: var(--primary);
             background: rgba(67, 97, 238, 0.08);
@@ -482,12 +549,21 @@
     </style>
 </head>
 <body>
+    <!-- Overlay for mobile bottom cart drawer -->
+    <div class="cart-overlay" onclick="toggleCartDrawer()"></div>
+
+    <!-- Floating action cart button for mobile -->
+    <button class="cart-floating-btn" onclick="toggleCartDrawer()">
+        <i class="fas fa-shopping-basket"></i>
+        <span>View Order (<span id="floatingCartCount">0</span>)</span>
+    </button>
+
     <main class="container">
         <div class="order-builder-container">
             <!-- Left Side: Menu List -->
             <div class="menu-builder">
                 <div class="controls-row">
-                    <h2 style="font-size: 1.3rem; font-weight: 800; color: var(--dark);"><i class="fas fa-utensils" style="color:var(--primary); margin-right:6px;"></i> Menu Items</h2>
+                    <h2 style="font-size: 1.2rem; font-weight: 800; color: var(--dark);"><i class="fas fa-utensils" style="color:var(--primary); margin-right:6px;"></i> Menu Items</h2>
                     <div class="search-wrapper">
                         <i class="fas fa-search"></i>
                         <input type="text" id="searchInput" class="search-input" placeholder="Search dish name..." oninput="filterMenu()">
@@ -507,37 +583,25 @@
                 </div>
             </div>
 
-            <!-- Right Side: Current Cart -->
+            <!-- Right Side: Current Cart (Desktop: sidebar, Mobile: bottom slide-up drawer) -->
             <div class="cart-wrapper">
                 <div class="cart-title-row">
                     <div class="cart-title">
                         <i class="fas fa-shopping-basket" style="color: var(--primary);"></i>
                         <span>New Order</span>
                     </div>
-                    <button class="btn-clear-cart" onclick="clearCart()">Clear All</button>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button class="btn-clear-cart" onclick="clearCart()">Clear All</button>
+                        <button id="closeCartDrawerBtn" style="display: none; background: none; border: none; font-size: 1.4rem; color: var(--gray); cursor: pointer; padding: 0 4px;" onclick="toggleCartDrawer()">×</button>
+                    </div>
                 </div>
 
                 <div class="cart-form-group">
                     <label class="cart-label">Table / Spot</label>
                     <select id="tableSelector" class="cart-select" onchange="handleTableChange(this.value)">
-                        <option value="Table 1">Table 1</option>
-                        <option value="Table 2">Table 2</option>
-                        <option value="Table 3">Table 3</option>
-                        <option value="Table 4">Table 4</option>
-                        <option value="Table 5">Table 5</option>
-                        <option value="Table 6">Table 6</option>
-                        <option value="Table 7">Table 7</option>
-                        <option value="Table 8">Table 8</option>
-                        <option value="Table 9">Table 9</option>
-                        <option value="Table 10">Table 10</option>
-                        <option value="Table 11">Table 11</option>
-                        <option value="Table 12">Table 12</option>
-                        <option value="Table 13">Table 13</option>
-                        <option value="Table 14">Table 14</option>
-                        <option value="Table 15">Table 15</option>
-                        <option value="Custom">Custom Name / Spot...</option>
+                        <!-- Dynamically populated tables list -->
                     </select>
-                    <input type="text" id="customTableInput" class="cart-input" placeholder="Enter custom table/customer name" style="display:none; margin-top:0.5rem;" oninput="validateTableInput()">
+                    <input type="text" id="customTableInput" class="cart-input" placeholder="Enter custom table/customer name" style="display:none; margin-top:0.4rem;" oninput="validateTableInput()">
                 </div>
 
                 <!-- Cart Items List -->
@@ -572,32 +636,32 @@
     <!-- Credit Modal -->
     <div class="custom-modal" id="creditModal">
         <div class="modal-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #f0f2f5; padding-bottom: 0.75rem;">
-                <h3 class="modal-title" style="margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--dark);"><i class="fas fa-credit-card" style="color:#8e44ad;"></i> Add Order to Credit</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid #f0f2f5; padding-bottom: 0.6rem;">
+                <h3 class="modal-title" style="margin: 0; font-size: 1.15rem; display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--dark);"><i class="fas fa-credit-card" style="color:#8e44ad;"></i> Add Order to Credit</h3>
                 <button type="button" onclick="closeCreditModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--gray);">×</button>
             </div>
             
-            <div style="margin-bottom: 1.25rem;">
-                <label style="display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--dark);">Select Credit Customer</label>
-                <select id="creditPersonSelect" style="width: 100%; padding: 12px; border-radius: var(--radius-md); border: 2px solid #e0e6ed; background-color: var(--white); font-weight: 500; font-size: 0.95rem;">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--dark);">Select Credit Customer</label>
+                <select id="creditPersonSelect" style="width: 100%; padding: 10px; border-radius: var(--radius-md); border: 2px solid #e0e6ed; background-color: var(--white); font-weight: 500; font-size: 0.9rem;">
                     <!-- Dynamically populated options -->
                 </select>
             </div>
             
-            <div style="display: flex; align-items: center; text-align: center; margin: 1.5rem 0; opacity: 0.8; width: 100%;">
+            <div style="display: flex; align-items: center; text-align: center; margin: 1.25rem 0; opacity: 0.8; width: 100%;">
                 <div style="flex: 1; border-bottom: 1px dashed var(--primary); opacity: 0.2; margin-right: .75em;"></div>
                 <span class="divider-label">OR CREATE NEW CUSTOMER</span>
                 <div style="flex: 1; border-bottom: 1px dashed var(--primary); opacity: 0.2; margin-left: .75em;"></div>
             </div>
             
-            <div style="margin-bottom: 1.25rem;">
-                <label style="display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--dark);">New Customer Name</label>
-                <input type="text" id="newPersonName" placeholder="Enter customer name" style="width: 100%; padding: 12px; border-radius: var(--radius-md); border: 2px solid #e0e6ed; font-weight: 500; font-size: 0.95rem;">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--dark);">New Customer Name</label>
+                <input type="text" id="newPersonName" placeholder="Enter customer name" style="width: 100%; padding: 10px; border-radius: var(--radius-md); border: 2px solid #e0e6ed; font-weight: 500; font-size: 0.9rem;">
             </div>
             
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--dark);">New Customer Phone (Optional)</label>
-                <input type="tel" id="newPersonPhone" placeholder="Enter phone number" style="width: 100%; padding: 12px; border-radius: var(--radius-md); border: 2px solid #e0e6ed; font-weight: 500; font-size: 0.95rem;">
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--dark);">New Customer Phone (Optional)</label>
+                <input type="tel" id="newPersonPhone" placeholder="Enter phone number" style="width: 100%; padding: 10px; border-radius: var(--radius-md); border: 2px solid #e0e6ed; font-weight: 500; font-size: 0.9rem;">
             </div>
             
             <div class="modal-actions">

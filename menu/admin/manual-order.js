@@ -3,6 +3,15 @@ const menuRef = commonRefs.menu;
 const ordersRef = commonRefs.orders;
 const db = firebase.database();
 
+const TABLES = [
+  "table 1", "table 2", "table 3", "table 4", 
+  "hall 1", "hall 2", "hall 3", 
+  "cabin 1", "cabin 2", "cabin 3", "cabin 4", "cabin 5", "cabin 6", "cabin up", 
+  "terrace", "top", 
+  "room 101", "room 102", "room 103", "room 104", 
+  "room 201", "room 202", "room 203"
+];
+
 let menuCache = { };
 let cart = [ ];
 let creditPeople = [ ];
@@ -18,6 +27,8 @@ function getImgUrl(name) {
 // 1. Initial Load of Menu and Credit Customers
 function init() {
     injectHeader('StaffManualOrder.html');
+    populateTableSelector();
+    updateFloatingCartCount();
     
     // Load menu items
     menuRef.on('value', snap => {
@@ -100,7 +111,7 @@ function renderMenuItems() {
         return `
             <div class="item-card" onclick="addToCart('${item.id}')">
                 <div class="item-card-img-wrapper">
-                    <img class="item-card-img" src="${getImgUrl(item.name)}" onerror="this.onerror=null; this.src='https://placehold.co/150x120?text=${encodeURIComponent(item.name)}';">
+                    <img class="item-card-img" src="${getImgUrl(item.name)}" onerror="this.onerror=null; this.src='https://placehold.co/120x90?text=${encodeURIComponent(item.name)}';">
                     <span class="item-card-badge">${item.category}</span>
                 </div>
                 <div class="item-card-info">
@@ -138,6 +149,7 @@ function addToCart(itemId) {
         });
     }
     renderCart();
+    updateFloatingCartCount();
     showToast(`Added ${menuItem.name} to order`);
 }
 
@@ -150,11 +162,13 @@ function updateCartQty(itemId, change) {
         cart.splice(index, 1);
     }
     renderCart();
+    updateFloatingCartCount();
 }
 
 function clearCart() {
     cart = [ ];
     renderCart();
+    updateFloatingCartCount();
 }
 
 function getCartTotal() {
@@ -200,6 +214,20 @@ function renderCart() {
 }
 
 // 5. Table Management
+function populateTableSelector() {
+    const selector = document.getElementById('tableSelector');
+    if (!selector) return;
+
+    let html = '<option value="General">General / Walk-in</option>';
+    TABLES.forEach(t => {
+        // Capitalize each word for display
+        const display = t.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        html += `<option value="${t}">${display}</option>`;
+    });
+    html += '<option value="Custom">Custom Name / Spot...</option>';
+    selector.innerHTML = html;
+}
+
 function handleTableChange(value) {
     const customInput = document.getElementById('customTableInput');
     if (value === 'Custom') {
@@ -211,20 +239,48 @@ function handleTableChange(value) {
     }
 }
 
-// 6. Order Submissions
 function getSelectedTable() {
     const selector = document.getElementById('tableSelector');
-    if (selector.value === 'Custom') {
+    if (selector && selector.value === 'Custom') {
         const val = document.getElementById('customTableInput').value.trim();
         return val || "Table Custom";
     }
-    return selector.value;
+    return selector ? selector.value : "General";
 }
 
+// Floating Cart Counter for Mobile Layout
+function updateFloatingCartCount() {
+    const countSpan = document.getElementById('floatingCartCount');
+    if (!countSpan) return;
+
+    const count = cart.reduce((total, item) => total + item.qty, 0);
+    countSpan.textContent = count;
+
+    const wrapper = document.querySelector('.cart-wrapper');
+    const overlay = document.querySelector('.cart-overlay');
+    if (count === 0 && wrapper && wrapper.classList.contains('active')) {
+        wrapper.classList.remove('active');
+        overlay.classList.remove('active');
+    }
+}
+
+function toggleCartDrawer() {
+    const wrapper = document.querySelector('.cart-wrapper');
+    const overlay = document.querySelector('.cart-overlay');
+    if (wrapper && overlay) {
+        wrapper.classList.toggle('active');
+        overlay.classList.toggle('active');
+    }
+}
+
+// 6. Order Submissions
 function getOrderPayload(status) {
     const tableName = getSelectedTable();
+    // Format customer display name, e.g. "Table 1", "Cabin Up", etc.
+    const displayTable = tableName.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
     return {
-        customerName: tableName,
+        customerName: displayTable,
         orderType: 'local',
         tableNumber: tableName,
         device: 'Manual Entry (Receptionist)',
@@ -242,7 +298,7 @@ function submitActiveOrder() {
         return;
     }
 
-    const payload = getOrderPayload('Accepted'); // Starts as Accepted directly so staff knows to cook it
+    const payload = getOrderPayload('Accepted'); // Starts as Accepted directly so kitchen staff knows to prepare
     const orderId = db.ref().child('orders/local/manual_order').push().key;
     
     db.ref(`orders/local/manual_order/${orderId}`).set(payload)
@@ -433,5 +489,6 @@ window.submitCompletedDirectOrder = submitCompletedDirectOrder;
 window.openCreditModal = openCreditModal;
 window.closeCreditModal = closeCreditModal;
 window.submitOrderToCredit = submitOrderToCredit;
+window.toggleCartDrawer = toggleCartDrawer;
 
 window.addEventListener('load', init);

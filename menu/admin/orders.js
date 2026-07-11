@@ -525,8 +525,14 @@ window.openCreditModal = openCreditModal;
 window.closeCreditModal = closeCreditModal;
 window.submitOrderToCredit = submitOrderToCredit;
 
+
 window.addEventListener('load', () => {
     injectHeader('StaffOrder.html');
-    fetchOrders();
-    listenToPresence();
+    firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+            fetchOrders();
+            listenToPresence();
+        }
+    });
 });
+  

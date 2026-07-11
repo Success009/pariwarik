@@ -24,39 +24,45 @@ function getImgUrl(name) {
     return `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${clean}?alt=media`;
 }
 
+
 // 1. Initial Load of Menu and Credit Customers
 function init() {
     injectHeader('StaffManualOrder.html');
     populateTableSelector();
     updateFloatingCartCount();
     
-    // Load menu items
-    menuRef.on('value', snap => {
-        menuCache = { };
-        snap.forEach(child => {
-            const item = child.val();
-            // Filter only 'Hotel' items that are in stock
-            if (item.type === 'Hotel' && item.status !== 'out_of_stock') {
-                menuCache[child.key] = { id: child.key, ...item };
-            }
-        });
-        renderCategoryTabs();
-        renderMenuItems();
-    });
+    firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+            // Load menu items
+            menuRef.on('value', snap => {
+                menuCache = { };
+                snap.forEach(child => {
+                    const item = child.val();
+                    // Filter only 'Hotel' items that are in stock
+                    if (item.type === 'Hotel' && item.status !== 'out_of_stock') {
+                        menuCache[child.key] = { id: child.key, ...item };
+                    }
+                });
+                renderCategoryTabs();
+                renderMenuItems();
+            });
 
-    // Real-time listener for credit customers (same as orders.js)
-    db.ref('credits/people').on('value', snap => {
-        creditPeople = [ ];
-        if (snap.exists()) {
-            snap.forEach(child => {
-                const p = child.val();
-                p.id = child.key;
-                creditPeople.push(p);
+            // Real-time listener for credit customers (same as orders.js)
+            db.ref('credits/people').on('value', snap => {
+                creditPeople = [ ];
+                if (snap.exists()) {
+                    snap.forEach(child => {
+                        const p = child.val();
+                        p.id = child.key;
+                        creditPeople.push(p);
+                    });
+                }
+                updateCreditSelect();
             });
         }
-        updateCreditSelect();
     });
 }
+  
 
 // 2. Render Category Tabs
 function renderCategoryTabs() {

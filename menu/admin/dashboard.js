@@ -226,7 +226,15 @@ const createCancelledCard = (order) => {
     return `
         <div class="data-card">
             <div class="card-header cancelled">
-                <div class="card-title"><span>${location}</span><i class="fas fa-ban"></i></div>
+                <div class="card-title">
+                    <span>${location}</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button class="delete-btn" onclick="confirmDeleteOrder('${order.id}', 'cancelled')" title="Delete Cancelled Order" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 2px 6px; font-size: 1rem; opacity: 0.7; transition: opacity 0.2s, transform 0.2s;" onmouseover="this.style.opacity='1'; this.style.transform='scale(1.15)';" onmouseout="this.style.opacity='0.7'; this.style.transform='scale(1)';">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <i class="fas fa-ban"></i>
+                    </div>
+                </div>
                 <div class="timestamp" data-time="${timestamp}">
                     Cancelled: ${new Date(timestamp).toLocaleString()} <span class="time-ago">(${formatRelativeTime(timestamp)})</span>
                 </div>
@@ -250,7 +258,15 @@ const createSaleCard = (order) => {
     return `
         <div class="data-card">
             <div class="card-header sales">
-                <div class="card-title"><span>${location}</span><i class="fas fa-receipt"></i></div>
+                <div class="card-title">
+                    <span>${location}</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button class="delete-btn" onclick="confirmDeleteOrder('${order.id}', 'sales')" title="Delete Completed Order" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 2px 6px; font-size: 1rem; opacity: 0.7; transition: opacity 0.2s, transform 0.2s;" onmouseover="this.style.opacity='1'; this.style.transform='scale(1.15)';" onmouseout="this.style.opacity='0.7'; this.style.transform='scale(1)';">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                </div>
                 <div class="timestamp" data-time="${order.timestamp}">
                     ${new Date(order.timestamp).toLocaleString()} <span class="time-ago">(${formatRelativeTime(order.timestamp)})</span>
                 </div>
@@ -294,6 +310,12 @@ const setView = (view) => {
     else if (view === 'credits') placeholder = 'Search customer accounts...';
     
     document.getElementById('searchBox').placeholder = placeholder;
+    
+    const clearBtn = document.getElementById('clearCancelledBtn');
+    if (clearBtn) {
+        clearBtn.style.display = view === 'cancelled' ? 'inline-block' : 'none';
+    }
+    
     applyFilters();
 };
 
@@ -400,10 +422,174 @@ function closeStatementModal() {
     }
 }
 
+// Order deletion state
+let orderIdToDelete = null;
+let orderTypeToDelete = null;
+
+// Open confirmation modal for order deletion
+function confirmDeleteOrder(orderId, type) {
+    orderIdToDelete = orderId;
+    orderTypeToDelete = type;
+    const m = document.getElementById('deleteConfirmModal');
+    if (m) {
+        m.style.display = 'flex';
+        setTimeout(() => m.classList.add('active'), 10);
+    }
+}
+
+// Close confirmation modal for order deletion
+function closeDeleteModal() {
+    const m = document.getElementById('deleteConfirmModal');
+    if (m) {
+        m.classList.remove('active');
+        setTimeout(() => m.style.display = 'none', 300);
+    }
+    orderIdToDelete = null;
+    orderTypeToDelete = null;
+}
+
+// Execute the database removal operation for the specified order
+async function executeDeleteOrder() {
+    if (!orderIdToDelete || !orderTypeToDelete) return;
+    
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    const originalText = confirmBtn.innerHTML;
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+    
+    try {
+        if (orderTypeToDelete === 'sales') {
+            await totalOrdersRef.child(orderIdToDelete).remove();
+        } else if (orderTypeToDelete === 'cancelled') {
+            await cancelledOrdersRef.child(orderIdToDelete).remove();
+        }
+        
+        showToast('Order deleted successfully', 'success');
+        closeDeleteModal();
+        
+        // Refresh dashboard data
+        await fetchAllData();
+    } catch (err) {
+        console.error('Error deleting order:', err);
+        showToast('Failed to delete order', 'error');
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalText;
+    }
+}
+
 // Bind to window for inline HTML actions
 window.setView = setView;
 window.openStatementModal = openStatementModal;
 window.closeStatementModal = closeStatementModal;
+window.confirmDeleteOrder = confirmDeleteOrder;
+window.closeDeleteModal = closeDeleteModal;
+window.executeDeleteOrder = executeDeleteOrder;
+
+// Open clear cancelled orders modal
+function promptClearCancelledOrders() {
+    const passwordInput = document.getElementById('deleteConfirmPassword');
+    if (passwordInput) passwordInput.value = '';
+    const m = document.getElementById('clearCancelledModal');
+    if (m) {
+        m.style.display = 'flex';
+        setTimeout(() => m.classList.add('active'), 10);
+    }
+}
+
+// Close clear cancelled orders modal
+function closeClearCancelledModal() {
+    const m = document.getElementById('clearCancelledModal');
+    if (m) {
+        m.classList.remove('active');
+        setTimeout(() => m.style.display = 'none', 300);
+    }
+}
+
+// Re-authenticate and execute clearing of filtered cancelled orders
+async function executeClearCancelledOrders() {
+    const password = document.getElementById('deleteConfirmPassword').value;
+    if (!password) {
+        showToast('Please enter your admin password', 'error');
+        return;
+    }
+    
+    const timeRange = document.getElementById('deleteTimeRange').value;
+    const confirmBtn = document.getElementById('executeClearCancelledBtn');
+    const originalText = confirmBtn.innerHTML;
+    
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+    
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user || !user.email) {
+            throw new Error('No active admin session found. Please re-login.');
+        }
+        
+        // Re-authenticate using the typed password
+        const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+        await user.reauthenticateWithCredential(credential);
+        
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+        
+        // Fetch snapshot of cancelled orders
+        const cancelledSnapshot = await cancelledOrdersRef.once('value');
+        if (!cancelledSnapshot.exists()) {
+            showToast('No cancelled orders found to delete', 'warning');
+            closeClearCancelledModal();
+            return;
+        }
+        
+        const now = Date.now();
+        const promises = [];
+        let deletedCount = 0;
+        
+        cancelledSnapshot.forEach(child => {
+            const order = child.val();
+            const orderId = child.key;
+            const orderTime = new Date(order.cancelledAt || order.timestamp).getTime();
+            const diffMs = now - orderTime;
+            
+            let shouldDelete = false;
+            if (timeRange === 'all') {
+                shouldDelete = true;
+            } else if (timeRange === 'older_24h' && diffMs > 24 * 60 * 60 * 1000) {
+                shouldDelete = true;
+            } else if (timeRange === 'older_7d' && diffMs > 7 * 24 * 60 * 60 * 1000) {
+                shouldDelete = true;
+            } else if (timeRange === 'older_30d' && diffMs > 30 * 24 * 60 * 60 * 1000) {
+                shouldDelete = true;
+            }
+            
+            if (shouldDelete) {
+                promises.push(cancelledOrdersRef.child(orderId).remove());
+                deletedCount++;
+            }
+        });
+        
+        if (promises.length > 0) {
+            await Promise.all(promises);
+            showToast(`Successfully deleted ${deletedCount} cancelled orders`, 'success');
+        } else {
+            showToast('No cancelled orders matched the selected time range', 'info');
+        }
+        
+        closeClearCancelledModal();
+        await fetchAllData();
+    } catch (err) {
+        console.error('Error clearing cancelled orders:', err);
+        showToast(err.message || 'Verification failed. Incorrect password.', 'error');
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalText;
+    }
+}
+
+// Bind to window for clear-cancelled handlers
+window.promptClearCancelledOrders = promptClearCancelledOrders;
+window.closeClearCancelledModal = closeClearCancelledModal;
+window.executeClearCancelledOrders = executeClearCancelledOrders;
 
 // Initialize Dashboard
 window.addEventListener('load', () => {

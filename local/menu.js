@@ -101,16 +101,30 @@ function startHeartbeat(db, uid) {
     presenceRef.onDisconnect().remove();
 }
 
+// Utility to parse category order robustly from Firebase (handles both array and object formats)
+function parseCategoryOrder(val) {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'object') {
+        return Object.keys(val)
+            .sort((x, y) => parseInt(x) - parseInt(y))
+            .map(k => val[k]);
+    }
+    return [];
+}
+
 function startListeners(db) {
     db.ref('menu/_categoryOrder').on('value', snap => {
-        categoryOrder = snap.val() || [ ];
+        categoryOrder = parseCategoryOrder(snap.val());
         if (allItems.length > 0) renderItems();
     });
 
     db.ref('menu').on('value', snap => {
         allItems = [ ];
         snap.forEach(c => {
-            allItems.push({id: c.key, ...c.val()});
+            if (c.key !== '_categoryOrder') {
+                allItems.push({id: c.key, ...c.val()});
+            }
         });
         renderItems();
     });
@@ -135,8 +149,9 @@ function renderItems() {
     filtered.forEach(i => { if(!categories[i.category]) categories[i.category] = [ ]; categories[i.category].push(i); });
     
     const sortedCats = Object.keys(categories).sort((a, b) => {
-        const indexA = categoryOrder.indexOf(a);
-        const indexB = categoryOrder.indexOf(b);
+        const order = Array.isArray(categoryOrder) ? categoryOrder : [];
+        const indexA = order.indexOf(a);
+        const indexB = order.indexOf(b);
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
         if (indexA !== -1) return -1;
         if (indexB !== -1) return 1;

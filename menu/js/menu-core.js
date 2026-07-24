@@ -54,10 +54,22 @@ function initApp() {
     }
 }
 
+// Utility to parse category order robustly from Firebase (handles both array and object formats)
+function parseCategoryOrder(val) {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'object') {
+        return Object.keys(val)
+            .sort((x, y) => parseInt(x) - parseInt(y))
+            .map(k => val[k]);
+    }
+    return [];
+}
+
 function startListeners(db) {
     // Fetch category order settings
     db.ref('menu/_categoryOrder').on('value', snap => {
-        window.categoryOrder = snap.val() || [ ];
+        window.categoryOrder = parseCategoryOrder(snap.val());
         if (window.allItems.length > 0) renderItems();
     });
 
@@ -65,8 +77,10 @@ function startListeners(db) {
     db.ref('menu').on('value', snap => {
         window.allItems = [ ];
         snap.forEach(c => {
-            const i = c.val();
-            window.allItems.push({id: c.key, ...i});
+            if (c.key !== '_categoryOrder') {
+                const i = c.val();
+                window.allItems.push({id: c.key, ...i});
+            }
         });
         renderItems();
     });
@@ -92,8 +106,9 @@ function renderItems() {
     filtered.forEach(i => { if(!categories[i.category]) categories[i.category] = [ ]; categories[i.category].push(i); });
 
     const sortedCats = Object.keys(categories).sort((a, b) => {
-        const indexA = window.categoryOrder.indexOf(a);
-        const indexB = window.categoryOrder.indexOf(b);
+        const order = Array.isArray(window.categoryOrder) ? window.categoryOrder : [];
+        const indexA = order.indexOf(a);
+        const indexB = order.indexOf(b);
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
         if (indexA !== -1) return -1;
         if (indexB !== -1) return 1;

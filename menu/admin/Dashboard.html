@@ -92,6 +92,9 @@
                 <option value="highest">Highest Amount</option>
                 <option value="lowest">Lowest Amount</option>
             </select>
+            <button class="btn btn-danger" id="clearCancelledBtn" style="display: none; height: 48px; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; background: var(--danger); color: white; border: none; padding: 0 1.5rem; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#c0392b'" onmouseout="this.style.backgroundColor='var(--danger)'" onclick="promptClearCancelledOrders()">
+                <i class="fas fa-trash-alt"></i> Clear Cancelled
+            </button>
         </div>
 
         <div class="data-container" id="dataContainer">
@@ -124,6 +127,53 @@
         </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div class="custom-modal" id="deleteConfirmModal" style="z-index: 2020;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 2rem;">
+            <div style="color: var(--danger); font-size: 3rem; margin-bottom: 1rem;">
+                <i class="fas fa-exclamation-triangle pulse-warn"></i>
+            </div>
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.4rem; font-weight: 800; color: var(--dark);">Delete Order?</h3>
+            <p style="color: var(--gray); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.5;">
+                Are you sure you want to permanently delete this order? This action cannot be undone.
+            </p>
+            <div class="modal-actions" style="display: flex; gap: 0.75rem; justify-content: center;">
+                <button type="button" class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()" style="flex: 1;">Cancel</button>
+                <button type="button" id="confirmDeleteBtn" class="modal-btn" onclick="executeDeleteOrder()" style="background: var(--danger); color: white; flex: 1; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#c0392b'" onmouseout="this.style.backgroundColor='var(--danger)'">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear Cancelled Orders Modal -->
+    <div class="custom-modal" id="clearCancelledModal" style="z-index: 2030;">
+        <div class="modal-content" style="max-width: 450px; text-align: left; padding: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #f0f2f5; padding-bottom: 0.75rem;">
+                <h3 class="modal-title" style="margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--danger);"><i class="fas fa-trash-alt"></i> Delete Cancelled Orders</h3>
+                <button type="button" onclick="closeClearCancelledModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--gray);">×</button>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: 700; font-size: 0.9rem; color: var(--dark); display: block; margin-bottom: 0.5rem;">Select Time Range to Delete:</label>
+                <select class="filter-dropdown" id="deleteTimeRange" style="width: 100%; box-sizing: border-box; border: 2px solid #e0e6ed; padding: 10px; border-radius: var(--radius-md); font-family: inherit; font-size: 0.95rem;">
+                    <option value="older_24h">Older than 24 Hours</option>
+                    <option value="older_7d">Older than 7 Days</option>
+                    <option value="older_30d">Older than 30 Days</option>
+                    <option value="all">All Cancelled Orders</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-weight: 700; font-size: 0.9rem; color: var(--dark); display: block; margin-bottom: 0.5rem;">Enter Password to Confirm:</label>
+                <input type="password" id="deleteConfirmPassword" placeholder="Enter admin password" style="width: 100%; box-sizing: border-box; border: 2px solid #e0e6ed; padding: 10px; border-radius: var(--radius-md); font-family: inherit; font-size: 0.95rem;">
+            </div>
+
+            <div class="modal-actions" style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                <button type="button" class="modal-btn modal-btn-cancel" onclick="closeClearCancelledModal()">Cancel</button>
+                <button type="button" id="executeClearCancelledBtn" class="modal-btn" onclick="executeClearCancelledOrders()" style="background: var(--danger); color: white; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#c0392b'" onmouseout="this.style.backgroundColor='var(--danger)'">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <style>
         /* Modals */
         .custom-modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
@@ -133,6 +183,17 @@
         .modal-btn { padding: 12px 24px; border-radius: var(--radius-md); border: none; cursor: pointer; font-weight: 700; transition: var(--transition); text-align: center; text-decoration: none; display: inline-block; }
         .modal-btn-cancel { background: #f0f2f5; color: var(--dark); }
         .modal-btn-cancel:hover { background: #e4e6eb; }
+        
+        /* Warning Pulse Animation */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+        .pulse-warn {
+            display: inline-block;
+            animation: pulse 2s infinite ease-in-out;
+        }
 
         .statement-list { list-style: none; padding: 0; }
         .statement-item { padding: 10px 0; border-bottom: 1px solid #f0f2f5; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: flex-start; }

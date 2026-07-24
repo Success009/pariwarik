@@ -7,9 +7,21 @@ let categoryOrder = [ ];
 // Load Data
 let renderTimeout;
 function loadMenu() {
+    // Utility to parse category order robustly from Firebase (handles both array and object formats)
+    function parseCategoryOrder(val) {
+        if (!val) return [];
+        if (Array.isArray(val)) return val;
+        if (typeof val === 'object') {
+            return Object.keys(val)
+                .sort((x, y) => parseInt(x) - parseInt(y))
+                .map(k => val[k]);
+        }
+        return [];
+    }
+
     // Listen for category order
     menuRef.child('_categoryOrder').on('value', snap => {
-        categoryOrder = snap.val() || [ ];
+        categoryOrder = parseCategoryOrder(snap.val());
         if (allItems.length > 0) renderMenu();
     });
 
@@ -57,8 +69,9 @@ function renderMenu() {
     let html = '';
     // Sort categories based on stored order, then alphabetical for new ones
     const sortedCats = Object.keys(grouped).sort((a, b) => {
-        const indexA = categoryOrder.indexOf(a);
-        const indexB = categoryOrder.indexOf(b);
+        const order = Array.isArray(categoryOrder) ? categoryOrder : [];
+        const indexA = order.indexOf(a);
+        const indexB = order.indexOf(b);
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
         if (indexA !== -1) return -1;
         if (indexB !== -1) return 1;

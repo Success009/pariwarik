@@ -86,16 +86,22 @@ function startListeners(db) {
     });
 }
 
+let renderTimeout;
 function renderItems() {
+    clearTimeout(renderTimeout);
+    renderTimeout = setTimeout(_performRenderItems, 100);
+}
+
+function _performRenderItems() {
     const grid = document.getElementById('menuContent');
     if(!grid) return;
-    
+
     const searchInput = document.getElementById('searchInput');
     const search = searchInput ? searchInput.value.toLowerCase() : '';
-    
+
     // STRICT FILTER: Type must be 'Hotel'
     const filtered = window.allItems.filter(i => (i.type === 'Hotel') && i.name.toLowerCase().includes(search));
-    
+
     grid.innerHTML = '';
     if(!filtered.length) { 
         grid.innerHTML = '<div style="text-align:center; padding:3rem; opacity:0.5; grid-column: 1/-1;">No items found</div>'; 
@@ -107,8 +113,13 @@ function renderItems() {
 
     const sortedCats = Object.keys(categories).sort((a, b) => {
         const order = Array.isArray(window.categoryOrder) ? window.categoryOrder : [];
-        const indexA = order.indexOf(a);
-        const indexB = order.indexOf(b);
+        const getIndex = (cat) => {
+            if (!cat) return -1;
+            const c = cat.trim().toLowerCase();
+            return order.findIndex(o => o && o.trim().toLowerCase() === c);
+        };
+        const indexA = getIndex(a);
+        const indexB = getIndex(b);
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
         if (indexA !== -1) return -1;
         if (indexB !== -1) return 1;
@@ -138,32 +149,43 @@ function renderItems() {
 
             card.innerHTML = `
                 <div class="img-container">
-                    <div class="img-fallback"><i class="fas fa-utensils"></i></div>
-                    <img id="img-${item.id}" src="" style="display:none; transition: opacity 0.4s;" onerror="this.style.display='none'; this.previousElementSibling.style.display='flex';">
+                    <div class="skeleton"></div>
+                    <img class="product-img" style="display:none;" alt="${item.name}">
+                    ${isOut ? '<div class="out-badge">Out of Stock</div>' : ''}
+                    ${item.discountPercent && new Date(item.discountExpiry) > new Date() ? `<div class="discount-badge">-${item.discountPercent}%</div>` : ''}
                 </div>
                 <div class="card-body">
-                    <div class="p-name">${item.name}</div>
-                    <div class="p-price">Rs ${price.toFixed(2)}</div>
-                    <div class="p-unit">${item.unit ? 'per ' + item.unit : ''}</div>
-                    <div id="ctrl-${item.id}" style="margin-top:auto;">
-                        ${cartItem ? `
-                            <div class="qty-controls">
-                                <button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button>
-                                <span style="font-weight:600;">${cartItem.qty}</span>
-                                <button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button>
-                            </div>
+                    <div class="card-header">
+                        <span class="rarity ${item.rarity ? item.rarity.toLowerCase() : 'basic'}">${item.rarity || 'Basic'}</span>
+                    </div>
+                    <h3 class="product-title">${item.name}</h3>
+                    <div class="product-meta">
+                        <span class="price">Rs ${price.toFixed(2)}</span>
+                        ${item.unit ? `<span class="unit">per ${item.startingValue || 1} ${item.unit}</span>` : ''}
+                    </div>
+                    <div class="product-actions">
+                        ${isOut ? `
+                            <button class="btn btn-secondary" disabled style="width:100%;">Unavailable</button>
                         ` : `
-                            <button class="btn-add" ${isOut?'disabled':''} onclick="addToCart('${item.id}')">${isOut?'Sold Out':'Add to Order'}</button>
+                            <div class="qty-selector" style="${cartItem ? 'display:flex;' : 'display:none;'}">
+                                <button class="qty-btn minus" onclick="updateCartQty('${item.id}', -1)">-</button>
+                                <span class="qty-val">${cartItem ? cartItem.qty : 1}</span>
+                                <button class="qty-btn plus" onclick="updateCartQty('${item.id}', 1)">+</button>
+                            </div>
+                            <button class="btn btn-primary add-to-cart" onclick="addToCart('${item.id}')" style="${cartItem ? 'display:none;' : 'display:block;'}">
+                                <i class="fas fa-plus"></i> Add
+                            </button>
                         `}
                     </div>
-                </div>`;
+                </div>
+            `;
+
             section.querySelector('.product-grid').appendChild(card);
 
-            // Optimized Image Loading with Cache
-            const cleanName = item.name.replace(/\s+/g, '') + '.jpg';
-            const img = document.getElementById(`img-${item.id}`);
-            
-            if(window.imageCache[item.id]) {
+            const img = card.querySelector('.product-img');
+            const cleanName = item.name.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase() + ".jpg";
+
+            if (window.imageCache[item.id]) {
                 if(img) {
                     img.src = window.imageCache[item.id];
                     img.style.display = 'block';

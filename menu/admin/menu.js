@@ -46,10 +46,18 @@ function loadMenu() {
 }
     
 
+let renderMenuTimeout;
 function renderMenu() {
+    clearTimeout(renderMenuTimeout);
+    renderMenuTimeout = setTimeout(_performRenderMenu, 100);
+}
+
+function _performRenderMenu() {
     const container = document.getElementById('menuContainer');
-    const search = document.getElementById('searchInput').value.toLowerCase();
-    
+    if (!container) return;
+    const searchInput = document.getElementById('searchInput');
+    const search = searchInput ? searchInput.value.toLowerCase() : '';
+
     if (allItems.length === 0) {
         container.innerHTML = `<div style="text-align:center; padding:5rem; opacity:0.5;"><h3>No items in menu yet.</h3></div>`;
         return;
@@ -70,8 +78,13 @@ function renderMenu() {
     // Sort categories based on stored order, then alphabetical for new ones
     const sortedCats = Object.keys(grouped).sort((a, b) => {
         const order = Array.isArray(categoryOrder) ? categoryOrder : [];
-        const indexA = order.indexOf(a);
-        const indexB = order.indexOf(b);
+        const getIndex = (cat) => {
+            if (!cat) return -1;
+            const c = cat.trim().toLowerCase();
+            return order.findIndex(o => o && o.trim().toLowerCase() === c);
+        };
+        const indexA = getIndex(a);
+        const indexB = getIndex(b);
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
         if (indexA !== -1) return -1;
         if (indexB !== -1) return 1;
@@ -277,8 +290,14 @@ function performCategoryRename() {
 function renderReorderList() {
     const list = document.getElementById('reorderList');
     const cats = Array.from(categories).sort((a, b) => {
-        const indexA = categoryOrder.indexOf(a);
-        const indexB = categoryOrder.indexOf(b);
+        const order = Array.isArray(categoryOrder) ? categoryOrder : [];
+        const getIndex = (cat) => {
+            if (!cat) return -1;
+            const c = cat.trim().toLowerCase();
+            return order.findIndex(o => o && o.trim().toLowerCase() === c);
+        };
+        const indexA = getIndex(a);
+        const indexB = getIndex(b);
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
         if (indexA !== -1) return -1;
         if (indexB !== -1) return 1;

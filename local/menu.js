@@ -130,7 +130,13 @@ function startListeners(db) {
     });
 }
 
+let renderTimeout;
 function renderItems() {
+    clearTimeout(renderTimeout);
+    renderTimeout = setTimeout(_performRenderItems, 100);
+}
+
+function _performRenderItems() {
     const grid = document.getElementById('menuContent');
     if (!grid) return;
     const search = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
@@ -147,11 +153,16 @@ function renderItems() {
     }
     const categories = { };
     filtered.forEach(i => { if(!categories[i.category]) categories[i.category] = [ ]; categories[i.category].push(i); });
-    
+
     const sortedCats = Object.keys(categories).sort((a, b) => {
         const order = Array.isArray(categoryOrder) ? categoryOrder : [];
-        const indexA = order.indexOf(a);
-        const indexB = order.indexOf(b);
+        const getIndex = (cat) => {
+            if (!cat) return -1;
+            const c = cat.trim().toLowerCase();
+            return order.findIndex(o => o && o.trim().toLowerCase() === c);
+        };
+        const indexA = getIndex(a);
+        const indexB = getIndex(b);
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
         if (indexA !== -1) return -1;
         if (indexB !== -1) return 1;

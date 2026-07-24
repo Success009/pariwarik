@@ -134,8 +134,10 @@ function renderMenuItems() {
     }).join('');
 }
 
+let filterMenuTimeout;
 function filterMenu() {
-    renderMenuItems();
+    clearTimeout(filterMenuTimeout);
+    filterMenuTimeout = setTimeout(renderMenuItems, 100);
 }
 
 // 4. Cart Operations

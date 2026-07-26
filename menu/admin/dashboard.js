@@ -29,14 +29,18 @@ const fetchAllData = async () => {
         menuCache[item.name] = { price: item.price || 0, startingValue: item.startingValue || 1 };
     });
 
+        const todayDateObj = new Date();
+    const todayDay = todayDateObj.getDate();
+    const todayMonth = todayDateObj.getMonth();
+    const todayYear = todayDateObj.getFullYear();
+
     // Helper to evaluate if a timestamp occurred on the current calendar day
     const isToday = (dateString) => {
         if (!dateString) return false;
         const date = new Date(dateString);
-        const today = new Date();
-        return date.getDate() === today.getDate() &&
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear();
+        return date.getDate() === todayDay &&
+            date.getMonth() === todayMonth &&
+            date.getFullYear() === todayYear;
     };
 
     // Process Cancelled Orders
@@ -277,8 +281,11 @@ const renderContent = () => {
         return;
     }
 
+    // Slice array to top 100 items to avoid DOM overload and keep navigation extremely snappy
+    const visibleItems = filteredItems.slice(0, 100);
+
     let html = '';
-    filteredItems.forEach(item => {
+    visibleItems.forEach(item => {
         if (currentView === 'sales') html += createSaleCard(item);
         else if (currentView === 'cancelled') html += createCancelledCard(item);
         else if (currentView === 'imports') html += createImportCard(item);
@@ -685,12 +692,26 @@ window.promptClearCancelledOrders = promptClearCancelledOrders;
 window.closeClearCancelledModal = closeClearCancelledModal;
 window.executeClearCancelledOrders = executeClearCancelledOrders;
 
+// A simple debounce utility to defer expensive function calls during rapid keystrokes
+const debounce = (func, delay) => {
+    let timeoutId;
+    return (...args) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            func.apply(null, args);
+        }, delay);
+    };
+};
+
 // Initialize Dashboard
 window.addEventListener('load', () => {
     injectHeader('Dashboard.html');
     fetchAllData();
     
-    document.getElementById('searchBox').addEventListener('input', applyFilters);
+    // Applying debounce to keystrokes on the search input prevents redundant DOM rebuilds
+    const debouncedApplyFilters = debounce(applyFilters, 150);
+    document.getElementById('searchBox').addEventListener('input', debouncedApplyFilters);
+    
     document.getElementById('timeFilter').addEventListener('change', applyFilters);
     document.getElementById('sortOrder').addEventListener('change', applyFilters);
 

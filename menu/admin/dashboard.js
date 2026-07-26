@@ -215,7 +215,84 @@ const applyFilters = () => {
     const searchTerm = document.getElementById('searchBox').value.toLowerCase();
     const timeFilter = document.getElementById('timeFilter').value;
     const sortOrder = document.getElementById('sortOrder').value;
-    
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const thisWeek = new Date(today); 
+    thisWeek.setDate(today.getDate() - today.getDay());
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Pre-cache localized calendar structures to keep performance fast
+    const todayDateObj = new Date();
+    const todayDay = todayDateObj.getDate();
+    const todayMonth = todayDateObj.getMonth();
+    const todayYear = todayDateObj.getFullYear();
+
+    const isToday = (dateString) => {
+        if (!dateString) return false;
+        const date = new Date(dateString);
+        return date.getDate() === todayDay &&
+            date.getMonth() === todayMonth &&
+            date.getFullYear() === todayYear;
+    };
+
+    // Helper to evaluate if a specific Date matches the selected timeframe filter
+    const matchesTimeFilter = (dateObj) => {
+        if (!dateObj) return false;
+
+        if (timeFilter === 'today') return isToday(dateObj.toISOString());
+        if (timeFilter === 'week') return dateObj >= thisWeek;
+        if (timeFilter === 'month') return dateObj >= thisMonth;
+        if (timeFilter === 'specific') {
+            const pickerVal = document.getElementById('datePicker').value;
+            if (!pickerVal) return false;
+            const targetDate = new Date(pickerVal);
+            return dateObj.getDate() === targetDate.getDate() &&
+                dateObj.getMonth() === targetDate.getMonth() &&
+                dateObj.getFullYear() === targetDate.getFullYear();
+        }
+        return true; // 'all' time
+    };
+
+    // If current tab is "Items Specific", build the dynamic map of units sold
+    if (currentView === 'itemSales') {
+        const itemSalesMap = {};
+
+        allOrders.forEach(order => {
+            const orderDateStr = order.completedAt || order.timestamp;
+            if (orderDateStr) {
+                const orderDate = new Date(orderDateStr);
+                if (matchesTimeFilter(orderDate)) {
+                    (order.items || []).forEach(item => {
+                        if (item.isDivider) return;
+                        const name = item.name;
+                        const qty = parseFloat(item.qty || item.quantity || 1);
+                        if (!itemSalesMap[name]) {
+                            const meta = menuCache[name] || {};
+                            itemSalesMap[name] = {
+                                name: name,
+                                qty: 0,
+                                id: meta.id || '',
+                                category: meta.category || 'Other'
+                            };
+                        }
+                        itemSalesMap[name].qty += qty;
+                    });
+                }
+            }
+        });
+
+        // Convert key/value structure and filter by search box query
+        filteredItems = Object.values(itemSalesMap).filter(item => {
+            return !searchTerm || item.name.toLowerCase().includes(searchTerm) || item.category.toLowerCase().includes(searchTerm);
+        });
+
+        // Sort by quantities sold (highest first)
+        filteredItems.sort((a, b) => b.qty - a.qty);
+        renderContent();
+        return;
+    }
+
     let sourceData = [ ];
     let timestampField = 'timestamp';
     let amountField = 'calculatedTotal';
@@ -235,22 +312,14 @@ const applyFilters = () => {
         amountField = 'remainingCredit';
     }
 
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const thisWeek = new Date(today); 
-    thisWeek.setDate(today.getDate() - today.getDay());
-    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
     filteredItems = sourceData.filter(item => {
         const itemDate = new Date(item[timestampField]);
         let matchesTime = true;
-        
+
         if (currentView !== 'credits') {
-            if (timeFilter === 'today') matchesTime = itemDate >= today;
-            else if (timeFilter === 'week') matchesTime = itemDate >= thisWeek;
-            else if (timeFilter === 'month') matchesTime = itemDate >= thisMonth;
+            matchesTime = matchesTimeFilter(itemDate);
         }
-        
+
         let matchesSearch = !searchTerm || (
             currentView === 'credits'
             ? (item.name && item.name.toLowerCase().includes(searchTerm)) || (item.phone && item.phone.toLowerCase().includes(searchTerm))
@@ -258,7 +327,7 @@ const applyFilters = () => {
                 ? item.id.toLowerCase().includes(searchTerm) || (item.items && item.items.some(i => i.name && i.name.toLowerCase().includes(searchTerm)))
                 : (item.name && item.name.toLowerCase().includes(searchTerm)) || (item.type && item.type.toLowerCase().includes(searchTerm)))
         );
-        
+
         return matchesTime && matchesSearch;
     });
 
@@ -290,6 +359,7 @@ const renderContent = () => {
         else if (currentView === 'cancelled') html += createCancelledCard(item);
         else if (currentView === 'imports') html += createImportCard(item);
         else if (currentView === 'credits') html += createCreditCard(item);
+        else if (currentView === 'itemSales') html += createItemSalesCard(item);
     });
     container.innerHTML = html;
 };
@@ -396,27 +466,48 @@ const createImportCard = (item) => {
         </div>`;
 };
 
+// Helper to toggle visibility of the specific date picker input based on timeframe selection
+const toggleDatePickerVisibility = (filterValue) => {
+    const picker = document.getElementById('datePicker');
+    if (picker) {
+        picker.style.display = filterValue === 'specific' ? 'inline-block' : 'none';
+    }
+};
+
 const setView = (view) => {
     currentView = view;
     document.getElementById('viewSalesBtn').classList.toggle('active', view === 'sales');
     document.getElementById('viewCancelledBtn').classList.toggle('active', view === 'cancelled');
     document.getElementById('viewImportsBtn').classList.toggle('active', view === 'imports');
-    
+
     const creditsBtn = document.getElementById('viewCreditsBtn');
     if (creditsBtn) creditsBtn.classList.toggle('active', view === 'credits');
-    
+
+    const itemSalesBtn = document.getElementById('viewItemSalesBtn');
+    if (itemSalesBtn) itemSalesBtn.classList.toggle('active', view === 'itemSales');
+
     let placeholder = 'Search sales...';
     if (view === 'cancelled') placeholder = 'Search cancelled orders...';
     else if (view === 'imports') placeholder = 'Search inventory...';
     else if (view === 'credits') placeholder = 'Search customer accounts...';
-    
+    else if (view === 'itemSales') placeholder = 'Search item names...';
+
     document.getElementById('searchBox').placeholder = placeholder;
-    
+
     const clearBtn = document.getElementById('clearCancelledBtn');
     if (clearBtn) {
         clearBtn.style.display = view === 'cancelled' ? 'inline-block' : 'none';
     }
-    
+
+    // Default the timeframe filter to 'today' when switching to the item specific sales tab
+    if (view === 'itemSales') {
+        const timeFilterEl = document.getElementById('timeFilter');
+        if (timeFilterEl && timeFilterEl.value === 'all') {
+            timeFilterEl.value = 'today';
+            toggleDatePickerVisibility('today');
+        }
+    }
+
     applyFilters();
 };
 
@@ -687,6 +778,26 @@ async function executeClearCancelledOrders() {
     }
 }
 
+// Creates a beautifully styled itemSpecific sales card, complete with Fallback image loading
+const createItemSalesCard = (item) => {
+    // Standardizes item names according to storage ref formatting guidelines
+    const cleanName = item.name.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase() + ".jpg";
+    const imgUrl = `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${cleanName}?alt=media`;
+
+    return `
+        <div class="data-card" style="display:flex; align-items:center; padding:1.25rem; gap:1.25rem;">
+            <img src="${imgUrl}" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=No+Image';" style="width:65px; height:65px; object-fit:cover; border-radius:12px; background:#f0f2f5; flex-shrink:0; box-shadow:var(--shadow);">
+            <div style="flex:1; min-width:0;">
+                <div style="font-weight:800; font-size:1.1rem; color:var(--dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-transform:uppercase; letter-spacing:0.5px;">${item.name}</div>
+                <div style="font-size:0.8rem; color:var(--gray); margin-top:2px;">Category: ${item.category}</div>
+            </div>
+            <div style="text-align:right; flex-shrink:0;">
+                <div style="font-size:0.75rem; text-transform:uppercase; color:var(--gray); font-weight:700; letter-spacing:0.5px;">Units Sold</div>
+                <div style="font-size:1.8rem; font-weight:800; color:var(--primary); line-height:1;">${item.qty}</div>
+            </div>
+        </div>`;
+};
+
 // Bind to window for clear-cancelled handlers
 window.promptClearCancelledOrders = promptClearCancelledOrders;
 window.closeClearCancelledModal = closeClearCancelledModal;
@@ -707,12 +818,15 @@ const debounce = (func, delay) => {
 window.addEventListener('load', () => {
     injectHeader('Dashboard.html');
     fetchAllData();
-    
+
     // Applying debounce to keystrokes on the search input prevents redundant DOM rebuilds
     const debouncedApplyFilters = debounce(applyFilters, 150);
     document.getElementById('searchBox').addEventListener('input', debouncedApplyFilters);
-    
-    document.getElementById('timeFilter').addEventListener('change', applyFilters);
+
+    document.getElementById('timeFilter').addEventListener('change', (e) => {
+        toggleDatePickerVisibility(e.target.value);
+        applyFilters();
+    });
     document.getElementById('sortOrder').addEventListener('change', applyFilters);
 
     setInterval(() => {

@@ -72,11 +72,12 @@
             <div class="stat-card inventory"><div class="stat-label">Inventory Value</div><div class="stat-value" id="inventoryValue">Rs 0</div></div>
         </div>
 
-        <div class="view-toggle">
+                <div class="view-toggle">
             <button class="btn view-btn active" id="viewSalesBtn" onclick="setView('sales')"><i class="fas fa-chart-line"></i> Sales History</button>
             <button class="btn view-btn" id="viewCancelledBtn" onclick="setView('cancelled')"><i class="fas fa-times-circle"></i> Cancelled Orders</button>
             <button class="btn view-btn" id="viewImportsBtn" onclick="setView('imports')"><i class="fas fa-boxes"></i> Import History</button>
             <button class="btn view-btn" id="viewCreditsBtn" onclick="setView('credits')"><i class="fas fa-credit-card"></i> Credit Ledger</button>
+            <button class="btn view-btn" id="viewItemSalesBtn" onclick="setView('itemSales')"><i class="fas fa-hamburger"></i> Items Specific</button>
         </div>
     
 
@@ -87,7 +88,9 @@
                 <option value="today">Today</option>
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
+                <option value="specific">Specific Date</option>
             </select>
+            <input type="date" class="filter-dropdown" id="datePicker" style="display: none; height: 48px; border-radius: var(--radius-md); font-family: inherit; font-size: 0.95rem; border: 2px solid #e0e6ed; padding: 10px;" onchange="applyFilters()">
             <select class="filter-dropdown" id="sortOrder">
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>

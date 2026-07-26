@@ -84,17 +84,22 @@ const fetchAllData = async () => {
             const discount = order.discount || 0;
             order.calculatedTotal = orderTotal - discount;
             allOrders.push(order);
-            totalRevenue += order.calculatedTotal;
             totalDiscounts += discount;
 
-            // Track completed sales that occurred today
+            // Credits should not be counted as a profit/revenue until paid
+            const isCreditOrder = order.paymentType === 'credit';
+            if (!isCreditOrder) {
+                totalRevenue += order.calculatedTotal;
+            }
+
+            // Track completed non-credit sales that occurred today
             const orderDate = order.completedAt || order.timestamp;
-            if (isToday(orderDate)) {
+            if (isToday(orderDate) && !isCreditOrder) {
                 todayRevenue += order.calculatedTotal;
             }
         });
     }
-
+    
     // Process Inventory
     const importsMap = new Map();
     let totalImportValue = 0;
@@ -113,7 +118,7 @@ const fetchAllData = async () => {
         if (!usageMap[usage.importKey]) usageMap[usage.importKey] = 0;
         usageMap[usage.importKey] += usage.quantityUsed;
     });
-
+    
     let costOfUsed = 0;
     let todayCostOfUsed = 0; // Accumulates cost of raw goods consumed today
     for (const [importKey, quantityUsed] of Object.entries(usageMap)) {
@@ -135,7 +140,7 @@ const fetchAllData = async () => {
             }
         }
     });
-
+    
     const inventoryValue = totalImportValue - costOfUsed;
 
     // Process Credits Snapshot
@@ -150,30 +155,33 @@ const fetchAllData = async () => {
         });
     }
 
-    // Process Credit Transactions to evaluate cash flow strictly for the current day
-    let todayCreditsAdded = 0;
-    let todayCreditsPaid = 0;
+    // Process Credit Transactions to evaluate cash flow strictly for all-time and the current day
+    let totalCreditPayments = 0;
+    let todayCreditPayments = 0;
     if (transactionsSnapshot && transactionsSnapshot.exists()) {
         transactionsSnapshot.forEach(personChild => {
             personChild.forEach(txChild => {
                 const tx = txChild.val();
-                if (isToday(tx.timestamp)) {
-                    if (tx.type === 'addition') {
-                        todayCreditsAdded += (tx.amount || 0);
-                    } else if (tx.type === 'payment') {
-                        todayCreditsPaid += (tx.amount || 0);
+                if (tx.type === 'payment') {
+                    const paymentAmount = tx.amount || 0;
+                    totalCreditPayments += paymentAmount;
+                    if (isToday(tx.timestamp)) {
+                        todayCreditPayments += paymentAmount;
                     }
                 }
             });
         });
     }
 
-    // Net profit is calculated using realized cash revenue (minus flat discounts and remaining unpaid credits)
-    const netProfit = totalRevenue - totalRemainingCredits - costOfUsed;
+    // Add settled credit payments to total and today's revenues (Credits only count towards revenue/profit once paid)
+    totalRevenue += totalCreditPayments;
+    todayRevenue += todayCreditPayments;
 
-    // Today's Realized Profit = (Today's Sales - Today's Credit Sales + Today's Credit Payments) - Today's Cost of Raw Goods
-    const todayRevenueRealized = todayRevenue - todayCreditsAdded + todayCreditsPaid;
-    const todayProfit = todayRevenueRealized - todayCostOfUsed;
+    // Net profit is strictly calculated using realized cash revenue (Cash Sales + Credit Payments - Cost of Goods)
+    const netProfit = totalRevenue - costOfUsed;
+
+    // Today's Realized Profit = Today's Realized Cash Revenue - Today's Cost of Raw Goods
+    const todayProfit = todayRevenue - todayCostOfUsed;
 
     updateStats({ totalRevenue, costOfUsed, inventoryValue, totalRemainingCredits, netProfit, totalDiscounts, todayProfit });
     applyFilters();

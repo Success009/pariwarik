@@ -34,10 +34,11 @@ const fetchAllData = async () => {
     const todayMonth = todayDateObj.getMonth();
     const todayYear = todayDateObj.getFullYear();
 
-    // Helper to evaluate if a timestamp occurred on the current calendar day
-    const isToday = (dateString) => {
-        if (!dateString) return false;
-        const date = new Date(dateString);
+        // Helper to evaluate if a timestamp occurred on the current calendar day
+    const isToday = (dateVal) => {
+        if (!dateVal) return false;
+        const date = (dateVal instanceof Date) ? dateVal : new Date(dateVal);
+        if (isNaN(date.getTime())) return false;
         return date.getDate() === todayDay &&
             date.getMonth() === todayMonth &&
             date.getFullYear() === todayYear;
@@ -222,15 +223,17 @@ const applyFilters = () => {
     thisWeek.setDate(today.getDate() - today.getDay());
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Pre-cache localized calendar structures to keep performance fast
+        // Pre-cache localized calendar structures to keep performance fast
     const todayDateObj = new Date();
     const todayDay = todayDateObj.getDate();
     const todayMonth = todayDateObj.getMonth();
     const todayYear = todayDateObj.getFullYear();
 
-    const isToday = (dateString) => {
-        if (!dateString) return false;
-        const date = new Date(dateString);
+    // A robust, null-safe checker that supports both String and Date types without throwing RangeErrors
+    const isToday = (dateVal) => {
+        if (!dateVal) return false;
+        const date = (dateVal instanceof Date) ? dateVal : new Date(dateVal);
+        if (isNaN(date.getTime())) return false;
         return date.getDate() === todayDay &&
             date.getMonth() === todayMonth &&
             date.getFullYear() === todayYear;
@@ -238,9 +241,9 @@ const applyFilters = () => {
 
     // Helper to evaluate if a specific Date matches the selected timeframe filter
     const matchesTimeFilter = (dateObj) => {
-        if (!dateObj) return false;
+        if (!dateObj || isNaN(dateObj.getTime())) return false;
 
-        if (timeFilter === 'today') return isToday(dateObj.toISOString());
+        if (timeFilter === 'today') return isToday(dateObj);
         if (timeFilter === 'week') return dateObj >= thisWeek;
         if (timeFilter === 'month') return dateObj >= thisMonth;
         if (timeFilter === 'specific') {

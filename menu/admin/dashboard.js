@@ -49,15 +49,17 @@ const fetchAllData = async () => {
     if (cancelledSnapshot.exists()) {
         cancelledSnapshot.forEach(child => {
             const order = child.val();
+            if (!order) return;
             order.id = child.key;
             let orderTotal = 0;
-            if (order.items) {
+            if (order.items && Array.isArray(order.items)) {
                 order.items.forEach(item => {
-                    if (item.isDivider) return;
-                    const meta = menuCache[item.name] || { };
+                    if (!item || item.isDivider) return;
+                    const name = item.name || "Unknown Item";
+                    const meta = menuCache[name] || { };
                     const pricePerUnit = item.price !== undefined ? item.price : (meta.price || 0) / (meta.startingValue || 1);
-                    const qty = item.qty || item.quantity || 1;
-                    orderTotal += pricePerUnit * qty;
+                    const qty = parseFloat(item.qty || item.quantity || 1);
+                    orderTotal += pricePerUnit * (isNaN(qty) ? 0 : qty);
                 });
             }
             order.calculatedTotal = orderTotal;
@@ -74,15 +76,17 @@ const fetchAllData = async () => {
     if (ordersSnapshot.exists()) {
         ordersSnapshot.forEach(child => {
             const order = child.val();
+            if (!order) return;
             order.id = child.key;
             let orderTotal = 0;
-            if (order.items) {
+            if (order.items && Array.isArray(order.items)) {
                 order.items.forEach(item => {
-                    if (item.isDivider) return;
-                    const meta = menuCache[item.name] || { };
+                    if (!item || item.isDivider) return;
+                    const name = item.name || "Unknown Item";
+                    const meta = menuCache[name] || { };
                     const pricePerUnit = item.price !== undefined ? item.price : (meta.price || 0) / (meta.startingValue || 1);
-                    const qty = item.qty || item.quantity || 1;
-                    orderTotal += pricePerUnit * qty;
+                    const qty = parseFloat(item.qty || item.quantity || 1);
+                    orderTotal += pricePerUnit * (isNaN(qty) ? 0 : qty);
                 });
             }
             // Subtract flat discount to obtain the actual realized cash revenue
@@ -104,7 +108,6 @@ const fetchAllData = async () => {
             }
         });
     }
-    
     // Process Inventory
     const importsMap = new Map();
     let totalImportValue = 0;
@@ -262,13 +265,14 @@ const applyFilters = () => {
         const itemSalesMap = {};
 
         allOrders.forEach(order => {
+            if (!order) return;
             const orderDateStr = order.completedAt || order.timestamp;
             if (orderDateStr) {
                 const orderDate = new Date(orderDateStr);
                 if (matchesTimeFilter(orderDate)) {
                     (order.items || []).forEach(item => {
-                        if (item.isDivider) return;
-                        const name = item.name;
+                        if (!item || item.isDivider) return;
+                        const name = item.name || "Unknown Item";
                         const qty = parseFloat(item.qty || item.quantity || 1);
                         if (!itemSalesMap[name]) {
                             const meta = menuCache[name] || {};
@@ -279,7 +283,7 @@ const applyFilters = () => {
                                 category: meta.category || 'Other'
                             };
                         }
-                        itemSalesMap[name].qty += qty;
+                        itemSalesMap[name].qty += isNaN(qty) ? 0 : qty;
                     });
                 }
             }
@@ -287,7 +291,9 @@ const applyFilters = () => {
 
         // Convert key/value structure and filter by search box query
         filteredItems = Object.values(itemSalesMap).filter(item => {
-            return !searchTerm || item.name.toLowerCase().includes(searchTerm) || item.category.toLowerCase().includes(searchTerm);
+            const name = item.name || "";
+            const category = item.category || "";
+            return !searchTerm || name.toLowerCase().includes(searchTerm) || category.toLowerCase().includes(searchTerm);
         });
 
         // Sort by quantities sold (highest first)
@@ -349,7 +355,38 @@ const applyFilters = () => {
 const renderContent = () => {
     const container = document.getElementById('dataContainer');
     if (filteredItems.length === 0) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-filter"></i><h3>No Items Found</h3><p>Try changing your filters or view.</p></div>';
+        const timeFilterEl = document.getElementById('timeFilter');
+        const timeFilter = timeFilterEl ? timeFilterEl.value : 'all';
+        let title = 'No Items Found';
+        let msg = 'Try changing your filters or view.';
+
+        if (timeFilter === 'all') {
+            title = 'No Data Available';
+            if (currentView === 'itemSales') {
+                msg = 'No items have been sold yet.';
+            } else if (currentView === 'sales') {
+                msg = 'No completed sales recorded yet.';
+            } else if (currentView === 'cancelled') {
+                msg = 'No cancelled orders recorded yet.';
+            } else if (currentView === 'imports') {
+                msg = 'No import records found.';
+            } else if (currentView === 'credits') {
+                msg = 'No customer accounts registered yet.';
+            }
+        } else if (timeFilter === 'today') {
+            title = 'No Data Today';
+            if (currentView === 'itemSales') {
+                msg = 'No items have been sold today.';
+            } else if (currentView === 'sales') {
+                msg = 'No completed sales recorded today.';
+            } else if (currentView === 'cancelled') {
+                msg = 'No cancelled orders recorded today.';
+            } else if (currentView === 'imports') {
+                msg = 'No import records today.';
+            }
+        }
+
+        container.innerHTML = `<div class="empty-state"><i class="fas fa-filter"></i><h3>${title}</h3><p>${msg}</p></div>`;
         return;
     }
 
@@ -784,19 +821,22 @@ async function executeClearCancelledOrders() {
 // Creates a beautifully styled itemSpecific sales card, complete with Fallback image loading
 const createItemSalesCard = (item) => {
     // Standardizes item names according to storage ref formatting guidelines
-    const cleanName = item.name.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase() + ".jpg";
+    const itemName = item.name || "Unknown Item";
+    const itemCategory = item.category || "Other";
+    const itemQty = item.qty !== undefined ? item.qty : 0;
+    const cleanName = itemName.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase() + ".jpg";
     const imgUrl = `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${cleanName}?alt=media`;
 
     return `
         <div class="data-card" style="display:flex; align-items:center; padding:1.25rem; gap:1.25rem;">
             <img src="${imgUrl}" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=No+Image';" style="width:65px; height:65px; object-fit:cover; border-radius:12px; background:#f0f2f5; flex-shrink:0; box-shadow:var(--shadow);">
             <div style="flex:1; min-width:0;">
-                <div style="font-weight:800; font-size:1.1rem; color:var(--dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-transform:uppercase; letter-spacing:0.5px;">${item.name}</div>
-                <div style="font-size:0.8rem; color:var(--gray); margin-top:2px;">Category: ${item.category}</div>
+                <div style="font-weight:800; font-size:1.1rem; color:var(--dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-transform:uppercase; letter-spacing:0.5px;">${itemName}</div>
+                <div style="font-size:0.8rem; color:var(--gray); margin-top:2px;">Category: ${itemCategory}</div>
             </div>
             <div style="text-align:right; flex-shrink:0;">
                 <div style="font-size:0.75rem; text-transform:uppercase; color:var(--gray); font-weight:700; letter-spacing:0.5px;">Units Sold</div>
-                <div style="font-size:1.8rem; font-weight:800; color:var(--primary); line-height:1;">${item.qty}</div>
+                <div style="font-size:1.8rem; font-weight:800; color:var(--primary); line-height:1;">${itemQty}</div>
             </div>
         </div>`;
 };

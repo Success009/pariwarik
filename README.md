@@ -81,6 +81,14 @@ The checkout flow features a streamlined delivery area selection:
 3. **Local Storage Synchronization**:
    * When redirected to *Bharatpur Bazar*, order metadata is saved to local storage under key `pariwarik_order` (and `order_info`) containing `customerName`, `phone`, `area` ('Somewhere Else'), and a JSON stringified `items` list so the partner app can parse and process the order.
 
+### The Flat Discount Flow
+
+Staff can apply flat rupee-based discounts to active orders (local table, hotel room, or delivery) before completion or credit settlement:
+1. **Deduction Application**: Staff click the "Discount" action button on the active order card to specify a flat discount amount (Rs).
+2. **State Sync**: Updates the `discount` field and adjust the `totalPrice` to `originalTotal - discount` directly under the active order node.
+3. **Archiving**: Upon completion or credit settlement, the discount details are preserved in the compiled order object written to `totalorders`.
+4. **Reporting**: The dashboard tracks `discount` fields to compute the net revenue and displays the aggregate discounts under a dedicated "Discounts Given" card.
+
 ---
 
 ## Instructions for AI Agents

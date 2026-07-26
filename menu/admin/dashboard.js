@@ -50,8 +50,9 @@ const fetchAllData = async () => {
     }
     document.getElementById('cancelledCount').textContent = allCancelled.length + " Orders";
     
-    // Process Sales (Completed Orders)
+        // Process Sales (Completed Orders)
     let totalRevenue = 0;
+    let totalDiscounts = 0; // Cumulative tracker of total flat discounts given to customers
     allOrders = [ ];
     if (ordersSnapshot.exists()) {
         ordersSnapshot.forEach(child => {
@@ -67,9 +68,12 @@ const fetchAllData = async () => {
                     orderTotal += pricePerUnit * qty;
                 });
             }
-            order.calculatedTotal = orderTotal;
+            // Subtract flat discount to obtain the actual realized cash revenue
+            const discount = order.discount || 0;
+            order.calculatedTotal = orderTotal - discount;
             allOrders.push(order);
-            totalRevenue += orderTotal;
+            totalRevenue += order.calculatedTotal;
+            totalDiscounts += discount;
         });
     }
     
@@ -115,9 +119,10 @@ const fetchAllData = async () => {
         });
     }
 
+    // Net profit is calculated using realized cash revenue (minus flat discounts and remaining unpaid credits)
     const netProfit = totalRevenue - totalRemainingCredits - costOfUsed;
 
-    updateStats({ totalRevenue, costOfUsed, inventoryValue, totalRemainingCredits, netProfit });
+    updateStats({ totalRevenue, costOfUsed, inventoryValue, totalRemainingCredits, netProfit, totalDiscounts });
     applyFilters();
 };
 
@@ -125,12 +130,16 @@ const updateStats = (stats) => {
     document.getElementById('totalRevenue').textContent = "Rs " + stats.totalRevenue.toFixed(2);
     document.getElementById('costOfUsed').textContent = "Rs " + stats.costOfUsed.toFixed(2);
     document.getElementById('inventoryValue').textContent = "Rs " + stats.inventoryValue.toFixed(2);
-    
+
     const remCreditsEl = document.getElementById('remainingCredits');
     if (remCreditsEl) remCreditsEl.textContent = "Rs " + stats.totalRemainingCredits.toFixed(2);
-    
+
     const netProfitEl = document.getElementById('netProfit');
     if (netProfitEl) netProfitEl.textContent = "Rs " + stats.netProfit.toFixed(2);
+
+    // Updates the cumulative discount tracker element on the Dashboard
+    const totalDiscountsEl = document.getElementById('totalDiscounts');
+    if (totalDiscountsEl) totalDiscountsEl.textContent = "Rs " + stats.totalDiscounts.toFixed(2);
 };
 
 const applyFilters = () => {
@@ -252,9 +261,14 @@ const createSaleCard = (order) => {
              const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "New Batch";
              return `<li class="item-divider"><span class="divider-label">Added at ${timeStr}</span></li>`;
         }
-        return '<li><span>' + item.name + '</span><span>&times; ' + (item.qty || item.quantity || 1) + '</span></li>';
+        return '<li><span>' + item.name + '</span><span>× ' + (item.qty || item.quantity || 1) + '</span></li>';
     }).join('');
     const location = order.tableNumber || order.landmark || order.roomNumber || ("Order #" + order.id.slice(-6));
+    
+    // Compute original subtotal to show breakdown alongside applied discount
+    const discount = order.discount || 0;
+    const subtotal = order.calculatedTotal + discount;
+
     return `
         <div class="data-card">
             <div class="card-header sales">
@@ -273,7 +287,22 @@ const createSaleCard = (order) => {
             </div>
             <div class="card-body">
                 <ul class="item-list">${orderItems || '<li>No items in this order</li>'}</ul>
-                <div class="price-info"><div class="total-price sales"><span>Total Sale:</span><span>Rs ${order.calculatedTotal.toFixed(2)}</span></div></div>
+                <div class="price-info">
+                    ${discount > 0 ? `
+                        <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--gray); margin-bottom:5px;">
+                            <span>Subtotal:</span>
+                            <span>Rs ${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--danger); margin-bottom:5px; font-weight:600;">
+                            <span>Discount:</span>
+                            <span>- Rs ${discount.toFixed(2)}</span>
+                        </div>
+                    ` : ''}
+                    <div class="total-price sales">
+                        <span>Total Sale:</span>
+                        <span>Rs ${order.calculatedTotal.toFixed(2)}</span>
+                    </div>
+                </div>
             </div>
         </div>`;
 };

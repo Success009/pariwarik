@@ -165,7 +165,7 @@ function renderAllOrders() {
             });
         }
 
-        let total = 0;
+                let total = 0;
         const itemsHTML = itemsToRender.map(i => {
             if (i.isDivider) {
                 const timeStr = i.timestamp ? new Date(i.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "New Items";
@@ -181,10 +181,14 @@ function renderAllOrders() {
                 <img src="${getImgUrl(i.name)}" style="width:35px; height:35px; border-radius:4px; object-fit:cover; background:#f0f2f5;" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=No+Image';">
                 <div style="flex:1;">
                     <div style="font-weight:600;">${i.name}</div>
-                    <div style="font-size:0.75rem; color:var(--gray);">Rs ${price.toFixed(2)} &times; ${qty}</div>
+                    <div style="font-size:0.75rem; color:var(--gray);">Rs ${price.toFixed(2)} × ${qty}</div>
                 </div>
             </li>`;
         }).join('');
+
+        // Apply discount subtraction if it exists in the active order model to keep metrics synced
+        const currentDiscount = order.discount || 0;
+        const discountedTotal = total - currentDiscount;
 
         const html = `
             <div class="order-card" id="${order.id}">
@@ -207,9 +211,19 @@ function renderAllOrders() {
                         <ul class="item-list">${itemsHTML}</ul>
                     </div>
                     <div class="price-info">
+                        ${currentDiscount > 0 ? `
+                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--gray); margin-bottom:5px;">
+                                <span>Subtotal:</span>
+                                <span>Rs ${total.toFixed(2)}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--danger); margin-bottom:5px; font-weight:600;">
+                                <span>Discount:</span>
+                                <span>- Rs ${currentDiscount.toFixed(2)}</span>
+                            </div>
+                        ` : ''}
                         <div class="price-row total-price">
                             <span>Total Price:</span>
-                            <span>Rs ${total.toFixed(2)}</span>
+                            <span>Rs ${discountedTotal.toFixed(2)}</span>
                         </div>
                     </div>
                 </div>
@@ -218,9 +232,10 @@ function renderAllOrders() {
                         `<button class="btn btn-primary" style="flex:1;" onclick="updateOrderStatus('${order.type}', '${order.userUid}', '${order.id}', 'Accepted')"><i class="fas fa-check"></i> Accept</button>` : 
                         `
                         <button class="btn btn-success" style="flex:1;" onclick="updateOrderStatus('${order.type}', '${order.userUid}', '${order.id}', 'Completed')"><i class="fas fa-flag-checkered"></i> Complete</button>
-                        ${order.type === 'local' ? `<button class="btn btn-warning" style="flex:1; background-color:#8e44ad; border-color:#8e44ad; color:white;" onclick="openCreditModal('${order.id}', '${order.userUid}', ${total})"><i class="fas fa-credit-card"></i> Credit</button>` : ''}
+                        ${order.type === 'local' ? `<button class="btn btn-warning" style="flex:1; background-color:#8e44ad; border-color:#8e44ad; color:white;" onclick="openCreditModal('${order.id}', '${order.userUid}', ${discountedTotal})"><i class="fas fa-credit-card"></i> Credit</button>` : ''}
                         `
                     }
+                    <button class="btn" style="flex:1; background-color:#d35400; border-color:#d35400; color:white;" onclick="openDiscountModal('${order.type}', '${order.userUid}', '${order.id}', ${total}, ${currentDiscount})"><i class="fas fa-tag"></i> Discount</button>
                     <button class="btn btn-danger" style="flex:1; min-width:80px;" onclick="updateOrderStatus('${order.type}', '${order.userUid}', '${order.id}', 'Cancelled')"><i class="fas fa-times-circle"></i> Cancel</button>
                 </div>
             </div>`;
@@ -524,6 +539,84 @@ function submitOrderToCredit() {
 window.openCreditModal = openCreditModal;
 window.closeCreditModal = closeCreditModal;
 window.submitOrderToCredit = submitOrderToCredit;
+
+// State management variables tracking the active discount application process
+let activeDiscountOrder = null;
+
+/**
+ * Opens the discount management modal and pre-fills current state values.
+ * This is designed so staff can easily apply or adjust flat rupee deductions.
+ */
+function openDiscountModal(type, userUid, orderId, originalTotal, currentDiscount) {
+    activeDiscountOrder = {
+        type: type,
+        userUid: userUid,
+        orderId: orderId,
+        originalTotal: originalTotal
+    };
+
+    document.getElementById('discountOriginalTotal').textContent = 'Rs ' + originalTotal.toFixed(2);
+    document.getElementById('discountCurrentAmount').textContent = 'Rs ' + currentDiscount.toFixed(2);
+    document.getElementById('discountAmountInput').value = currentDiscount > 0 ? currentDiscount : '';
+
+    const m = document.getElementById('discountModal');
+    if (m) {
+        m.style.display = 'flex';
+        setTimeout(() => m.classList.add('active'), 10);
+    }
+}
+
+/**
+ * Safely closes the active discount modal and resets internal tracking state.
+ */
+function closeDiscountModal() {
+    const m = document.getElementById('discountModal');
+    if (m) {
+        m.classList.remove('active');
+        setTimeout(() => m.style.display = 'none', 300);
+    }
+    activeDiscountOrder = null;
+}
+
+/**
+ * Validates and submits the custom flat discount to the Firebase Realtime Database.
+ * This directly updates the order node in real-time to keep financial indicators synchronized.
+ */
+function submitDiscount() {
+    if (!activeDiscountOrder) return;
+
+    const input = document.getElementById('discountAmountInput');
+    const amount = parseFloat(input.value) || 0;
+
+    if (amount < 0) {
+        showToast('Please enter a valid discount amount', 'error');
+        return;
+    }
+
+    if (amount > activeDiscountOrder.originalTotal) {
+        showToast('Discount cannot be larger than the order total', 'error');
+        return;
+    }
+
+    const path = `orders/${activeDiscountOrder.type}/${activeDiscountOrder.userUid}/${activeDiscountOrder.orderId}`;
+
+    // Write both the applied discount value and updated totalPrice in parallel to guarantee DB consistency
+    firebase.database().ref(path).update({
+        discount: amount,
+        totalPrice: activeDiscountOrder.originalTotal - amount
+    }).then(() => {
+        showToast('Discount applied successfully');
+        closeDiscountModal();
+    }).catch(err => {
+        console.error(err);
+        showToast('Error applying discount', 'error');
+    });
+}
+
+// Bind discount action handlers to window context to make them accessible to dynamic DOM elements
+window.openDiscountModal = openDiscountModal;
+window.closeDiscountModal = closeDiscountModal;
+window.submitDiscount = submitDiscount;
 
 
 window.addEventListener('load', () => {

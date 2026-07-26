@@ -13,13 +13,14 @@ const creditsPeopleRef = commonRefs.creditsPeople;
 const creditsTransactionsRef = commonRefs.creditsTransactions;
 
 const fetchAllData = async () => {
-    const [menuSnapshot, ordersSnapshot, importsSnapshot, usageSnapshot, cancelledSnapshot, creditsSnapshot] = await Promise.all([
+    const [menuSnapshot, ordersSnapshot, importsSnapshot, usageSnapshot, cancelledSnapshot, creditsSnapshot, transactionsSnapshot] = await Promise.all([
         menuRef.once('value'),
         totalOrdersRef.limitToLast(500).once('value'),
         importItemsRef.limitToLast(500).once('value'),
         usageRef.limitToLast(500).once('value'),
         cancelledOrdersRef.limitToLast(100).once('value'),
-        creditsPeopleRef.once('value')
+        creditsPeopleRef.once('value'),
+        creditsTransactionsRef.once('value')
     ]);
     // Load Menu Cache first
     menuCache = { };
@@ -27,6 +28,16 @@ const fetchAllData = async () => {
         const item = child.val();
         menuCache[item.name] = { price: item.price || 0, startingValue: item.startingValue || 1 };
     });
+
+    // Helper to evaluate if a timestamp occurred on the current calendar day
+    const isToday = (dateString) => {
+        if (!dateString) return false;
+        const date = new Date(dateString);
+        const today = new Date();
+        return date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear();
+    };
 
     // Process Cancelled Orders
     allCancelled = [ ];
@@ -49,9 +60,10 @@ const fetchAllData = async () => {
         });
     }
     document.getElementById('cancelledCount').textContent = allCancelled.length + " Orders";
-    
-        // Process Sales (Completed Orders)
+
+    // Process Sales (Completed Orders)
     let totalRevenue = 0;
+    let todayRevenue = 0; // Tracks revenue created strictly on the current calendar day
     let totalDiscounts = 0; // Cumulative tracker of total flat discounts given to customers
     allOrders = [ ];
     if (ordersSnapshot.exists()) {
@@ -74,9 +86,15 @@ const fetchAllData = async () => {
             allOrders.push(order);
             totalRevenue += order.calculatedTotal;
             totalDiscounts += discount;
+
+            // Track completed sales that occurred today
+            const orderDate = order.completedAt || order.timestamp;
+            if (isToday(orderDate)) {
+                todayRevenue += order.calculatedTotal;
+            }
         });
     }
-    
+
     // Process Inventory
     const importsMap = new Map();
     let totalImportValue = 0;
@@ -95,8 +113,9 @@ const fetchAllData = async () => {
         if (!usageMap[usage.importKey]) usageMap[usage.importKey] = 0;
         usageMap[usage.importKey] += usage.quantityUsed;
     });
-    
+
     let costOfUsed = 0;
+    let todayCostOfUsed = 0; // Accumulates cost of raw goods consumed today
     for (const [importKey, quantityUsed] of Object.entries(usageMap)) {
         const importItem = importsMap.get(importKey);
         if (importItem) {
@@ -104,7 +123,19 @@ const fetchAllData = async () => {
             costOfUsed += pricePerUnit * quantityUsed;
         }
     }
-    
+
+    // Isolate inventory usages that took place today specifically
+    usageSnapshot.forEach(child => {
+        const usage = child.val();
+        if (isToday(usage.createdAt)) {
+            const importItem = importsMap.get(usage.importKey);
+            if (importItem) {
+                const pricePerUnit = importItem.price / importItem.quantity;
+                todayCostOfUsed += pricePerUnit * (usage.quantityUsed || 0);
+            }
+        }
+    });
+
     const inventoryValue = totalImportValue - costOfUsed;
 
     // Process Credits Snapshot
@@ -119,10 +150,32 @@ const fetchAllData = async () => {
         });
     }
 
+    // Process Credit Transactions to evaluate cash flow strictly for the current day
+    let todayCreditsAdded = 0;
+    let todayCreditsPaid = 0;
+    if (transactionsSnapshot && transactionsSnapshot.exists()) {
+        transactionsSnapshot.forEach(personChild => {
+            personChild.forEach(txChild => {
+                const tx = txChild.val();
+                if (isToday(tx.timestamp)) {
+                    if (tx.type === 'addition') {
+                        todayCreditsAdded += (tx.amount || 0);
+                    } else if (tx.type === 'payment') {
+                        todayCreditsPaid += (tx.amount || 0);
+                    }
+                }
+            });
+        });
+    }
+
     // Net profit is calculated using realized cash revenue (minus flat discounts and remaining unpaid credits)
     const netProfit = totalRevenue - totalRemainingCredits - costOfUsed;
 
-    updateStats({ totalRevenue, costOfUsed, inventoryValue, totalRemainingCredits, netProfit, totalDiscounts });
+    // Today's Realized Profit = (Today's Sales - Today's Credit Sales + Today's Credit Payments) - Today's Cost of Raw Goods
+    const todayRevenueRealized = todayRevenue - todayCreditsAdded + todayCreditsPaid;
+    const todayProfit = todayRevenueRealized - todayCostOfUsed;
+
+    updateStats({ totalRevenue, costOfUsed, inventoryValue, totalRemainingCredits, netProfit, totalDiscounts, todayProfit });
     applyFilters();
 };
 
@@ -136,6 +189,10 @@ const updateStats = (stats) => {
 
     const netProfitEl = document.getElementById('netProfit');
     if (netProfitEl) netProfitEl.textContent = "Rs " + stats.netProfit.toFixed(2);
+
+    // Updates Today's profit metric card on the dashboard view
+    const todayProfitEl = document.getElementById('todayProfit');
+    if (todayProfitEl) todayProfitEl.textContent = "Rs " + stats.todayProfit.toFixed(2);
 
     // Updates the cumulative discount tracker element on the Dashboard
     const totalDiscountsEl = document.getElementById('totalDiscounts');

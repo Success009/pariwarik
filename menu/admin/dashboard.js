@@ -824,7 +824,7 @@ const createItemSalesCard = (item) => {
     const itemName = item.name || "Unknown Item";
     const itemCategory = item.category || "Other";
     const itemQty = item.qty !== undefined ? item.qty : 0;
-    const cleanName = itemName.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase() + ".jpg";
+    const cleanName = itemName.replace(/\s+/g, '') + '.jpg';
     const imgUrl = `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${cleanName}?alt=media`;
 
     return `

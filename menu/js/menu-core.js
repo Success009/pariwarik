@@ -183,7 +183,7 @@ function _performRenderItems() {
             section.querySelector('.product-grid').appendChild(card);
 
             const img = card.querySelector('.product-img');
-            const cleanName = item.name.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase() + ".jpg";
+            const cleanName = item.name.replace(/\s+/g, '') + '.jpg';
 
             if (window.imageCache[item.id]) {
                 if(img) {
@@ -199,7 +199,13 @@ function _performRenderItems() {
                         img.previousElementSibling.style.display = 'none';
                         window.imageCache[item.id] = url;
                     }
-                }).catch(() => {});
+                }).catch(() => {
+                    if(img) {
+                        img.src = 'https://placehold.co/400x400?text=No+Image';
+                        img.style.display = 'block';
+                        img.previousElementSibling.style.display = 'none';
+                    }
+                });
             }
         });
     });

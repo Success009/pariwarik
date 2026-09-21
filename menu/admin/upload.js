@@ -3,7 +3,14 @@ const storage = firebase.storage();
 const database = firebase.database();
 
 // DOM Elements
+const customSelectContainer = document.getElementById('customSelectContainer');
+const itemSearchInput = document.getElementById('itemSearchInput');
+const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+const selectedBadge = document.getElementById('selectedBadge');
+const selectedItemDisplay = document.getElementById('selectedItemDisplay');
+const dropdownList = document.getElementById('dropdownList');
 const itemSelect = document.getElementById('itemSelect');
+
 const imageUpload = document.getElementById('imageUpload');
 const fileLabel = document.getElementById('fileLabel');
 const filePreview = document.getElementById('filePreview');
@@ -22,37 +29,90 @@ const imageModal = document.getElementById('imageModal');
 const modalImage = document.getElementById('modalImage');
 const closeModalBtn = document.getElementById('closeModal');
 
+let allMenuItems = [];
+let selectedItem = null;
+
 // Fetch menu items from Firebase
 const fetchMenuItems = () => {
     const menuRef = database.ref('menu');
     menuRef.once('value', (snapshot) => {
-        const items = [];
+        allMenuItems = [];
         snapshot.forEach((childSnapshot) => {
             if (childSnapshot.key === '_categoryOrder') return;
             const item = childSnapshot.val();
             if (!item || !item.name) return;
 
-            items.push({
-                name: item.name.replace(/\s+/g, ''),
-                displayName: item.name
+            allMenuItems.push({
+                cleanName: item.name.replace(/\s+/g, ''),
+                displayName: item.name,
+                category: item.category || 'General'
             });
         });
         
         // Sort items alphabetically
-        items.sort((a, b) => a.displayName.localeCompare(b.displayName));
+        allMenuItems.sort((a, b) => a.displayName.localeCompare(b.displayName));
         
-        // Populate dropdown
-        itemSelect.innerHTML = '<option value="">Select an item</option>';
-        items.forEach((item) => {
-            const option = document.createElement('option');
-            option.value = item.name;
-            option.textContent = item.displayName;
-            itemSelect.appendChild(option);
-        });
+        renderDropdownList(allMenuItems);
     }).catch(err => {
         console.error("Error fetching menu items:", err);
         showToast("Error loading menu items: " + err.message, "error");
     });
+};
+
+const renderDropdownList = (items) => {
+    if (!dropdownList) return;
+    dropdownList.innerHTML = '';
+    if (items.length === 0) {
+        dropdownList.innerHTML = '<div class="dropdown-empty"><i class="fas fa-search" style="margin-right:6px;"></i> No matching items found</div>';
+        return;
+    }
+    items.forEach((item) => {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item';
+        div.innerHTML = `
+            <span class="item-name" style="font-weight: 600;">${item.displayName}</span>
+            <span class="item-cat">${item.category}</span>
+        `;
+        div.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            selectMenuItem(item);
+        });
+        dropdownList.appendChild(div);
+    });
+};
+
+const selectMenuItem = (item) => {
+    selectedItem = item;
+    itemSelect.value = item.cleanName;
+    itemSearchInput.value = item.displayName;
+    selectedBadge.style.display = 'flex';
+    selectedItemDisplay.textContent = item.displayName;
+    clearSelectionBtn.style.display = 'block';
+    dropdownList.style.display = 'none';
+    uploadButton.disabled = !(itemSelect.value && imageUpload.files.length > 0);
+};
+
+const clearSelection = () => {
+    selectedItem = null;
+    itemSelect.value = '';
+    itemSearchInput.value = '';
+    selectedBadge.style.display = 'none';
+    clearSelectionBtn.style.display = 'none';
+    uploadButton.disabled = true;
+    renderDropdownList(allMenuItems);
+};
+
+const filterMenuItems = (query) => {
+    const q = (query || '').toLowerCase().trim();
+    if (!q) {
+        renderDropdownList(allMenuItems);
+    } else {
+        const filtered = allMenuItems.filter(i => 
+            i.displayName.toLowerCase().includes(q) || 
+            i.category.toLowerCase().includes(q)
+        );
+        renderDropdownList(filtered);
+    }
 };
 
 // Format file size
@@ -163,6 +223,33 @@ window.addEventListener('load', () => {
     fetchMenuItems();
     displayImages();
 
+    // Search input interaction
+    itemSearchInput.addEventListener('focus', () => {
+        dropdownList.style.display = 'block';
+        filterMenuItems(itemSearchInput.value);
+    });
+
+    itemSearchInput.addEventListener('input', () => {
+        dropdownList.style.display = 'block';
+        filterMenuItems(itemSearchInput.value);
+        if (!itemSearchInput.value.trim()) {
+            clearSelection();
+        }
+    });
+
+    clearSelectionBtn.addEventListener('click', () => {
+        clearSelection();
+        itemSearchInput.focus();
+        dropdownList.style.display = 'block';
+    });
+
+    // Close dropdown on click outside
+    document.addEventListener('click', (e) => {
+        if (customSelectContainer && !customSelectContainer.contains(e.target)) {
+            dropdownList.style.display = 'none';
+        }
+    });
+
     imageUpload.addEventListener('change', () => {
         const file = imageUpload.files[0];
         if (file) {
@@ -184,10 +271,6 @@ window.addEventListener('load', () => {
         filePreview.style.display = 'none';
         fileLabel.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Choose an image to upload';
         uploadButton.disabled = true;
-    });
-
-    itemSelect.addEventListener('change', () => {
-        uploadButton.disabled = !(itemSelect.value && imageUpload.files.length > 0);
     });
 
     uploadButton.addEventListener('click', async () => {
@@ -222,7 +305,7 @@ window.addEventListener('load', () => {
                     imageUpload.value = '';
                     filePreview.style.display = 'none';
                     fileLabel.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Choose an image to upload';
-                    uploadButton.disabled = true;
+                    clearSelection();
                     displayImages();
                 }
             );

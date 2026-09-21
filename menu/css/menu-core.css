@@ -179,3 +179,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem 120px; }
 .modal-text { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 25px; }
 .modal-btn { background: var(--secondary); color: white; border: none; padding: 12px 30px; border-radius: 50px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: 0.3s; }
 .modal-btn:hover { background: var(--text); transform: translateY(-2px); }
+
+.img-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #f0f2f5; color: #b0bec5; font-size: 2.2rem; }
+.out-badge { position: absolute; top: 10px; right: 10px; background: rgba(211, 47, 47, 0.9); color: white; font-size: 0.7rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; z-index: 2; }
+.discount-badge { position: absolute; top: 10px; left: 10px; background: var(--accent); color: var(--secondary); font-size: 0.75rem; font-weight: 800; padding: 4px 8px; border-radius: 4px; z-index: 2; }

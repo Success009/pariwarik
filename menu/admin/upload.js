@@ -26,9 +26,12 @@ const closeModalBtn = document.getElementById('closeModal');
 const fetchMenuItems = () => {
     const menuRef = database.ref('menu');
     menuRef.once('value', (snapshot) => {
-        const items = [ ];
+        const items = [];
         snapshot.forEach((childSnapshot) => {
+            if (childSnapshot.key === '_categoryOrder') return;
             const item = childSnapshot.val();
+            if (!item || !item.name) return;
+
             items.push({
                 name: item.name.replace(/\s+/g, ''),
                 displayName: item.name
@@ -46,6 +49,9 @@ const fetchMenuItems = () => {
             option.textContent = item.displayName;
             itemSelect.appendChild(option);
         });
+    }).catch(err => {
+        console.error("Error fetching menu items:", err);
+        showToast("Error loading menu items: " + err.message, "error");
     });
 };
 
@@ -56,9 +62,9 @@ const formatFileSize = (bytes) => {
     else return (bytes / 1048576).toFixed(1) + ' MB';
 };
 
-// Resize image function
-const resizeImage = (file, maxWidth, maxHeight) => {
-    return new Promise((resolve) => {
+// Resize image function preserving aspect ratio
+const resizeImage = (file, maxWidth = 600, maxHeight = 600) => {
+    return new Promise((resolve, reject) => {
         const img = document.createElement('img');
         const reader = new FileReader();
         
@@ -66,15 +72,33 @@ const resizeImage = (file, maxWidth, maxHeight) => {
             img.src = e.target.result;
             img.onload = () => {
                 const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
                 const ctx = canvas.getContext('2d');
-                canvas.width = maxWidth;
-                canvas.height = maxHeight;
-                ctx.drawImage(img, 0, 0, maxWidth, maxHeight);
+                ctx.drawImage(img, 0, 0, width, height);
                 canvas.toBlob((blob) => {
-                    resolve(blob);
+                    if (blob) resolve(blob);
+                    else reject(new Error('Canvas toBlob failed'));
                 }, 'image/jpeg', 0.85);
             };
+            img.onerror = () => reject(new Error('Could not load image file'));
         };
+        reader.onerror = () => reject(new Error('Could not read image file'));
         reader.readAsDataURL(file);
     });
 };
@@ -91,7 +115,7 @@ const displayImages = () => {
     storageRef.listAll().then((result) => {
         imageGallery.innerHTML = '';
         if (result.items.length === 0) {
-            imageGallery.innerHTML = '<div class="empty-gallery"><i class="fas fa-image fa-3x"></i><p>No images found. Upload some!</p></div>';
+            imageGallery.innerHTML = '<div class="empty-gallery" style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--gray);"><i class="fas fa-image fa-3x"></i><p style="margin-top: 10px;">No images found. Upload some!</p></div>';
             imageCount.textContent = '0';
             return;
         }
@@ -114,19 +138,24 @@ const displayImages = () => {
                 
                 imageItem.querySelector('.delete-button').addEventListener('click', (e) => {
                     e.stopPropagation();
-                    if (confirm('Delete this image?')) {
+                    if (confirm(`Delete image "${imageRef.name}"?`)) {
                         storage.ref('images/' + imageRef.name).delete().then(() => {
                             imageItem.remove();
                             showToast('Image deleted successfully');
-                            const currentCount = parseInt(imageCount.textContent) - 1;
+                            const currentCount = Math.max(0, parseInt(imageCount.textContent) - 1);
                             imageCount.textContent = currentCount;
                         }).catch(err => showToast(err.message, 'error'));
                     }
                 });
                 imageGallery.appendChild(imageItem);
+            }).catch(err => {
+                console.warn('Could not load image URL for', imageRef.name, err);
             });
         });
-    }).catch(err => showStatus(err.message, 'error'));
+    }).catch(err => {
+        showStatus(err.message, 'error');
+        imageGallery.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--danger);"><i class="fas fa-exclamation-triangle fa-2x"></i><p style="margin-top: 10px;">Could not load gallery: ${err.message}</p></div>`;
+    });
 };
 
 window.addEventListener('load', () => {
@@ -170,11 +199,11 @@ window.addEventListener('load', () => {
         uploadButton.disabled = true;
         
         try {
-            const resizedBlob = await resizeImage(file, 200, 200);
-            const fileExtension = file.name.split('.').pop();
-            const selectedItemText = itemSelect.options[itemSelect.selectedIndex].text;
-            const newName = `${selectedItemText.replace(/\s+/g, '')}.${fileExtension}`;
-            const uploadTask = storage.ref('images/' + newName).put(resizedBlob);
+            const resizedBlob = await resizeImage(file, 600, 600);
+            const newName = `${itemName}.jpg`;
+            const uploadTask = storage.ref('images/' + newName).put(resizedBlob, {
+                contentType: 'image/jpeg'
+            });
             
             uploadTask.on('state_changed', 
                 (snapshot) => {
@@ -193,16 +222,17 @@ window.addEventListener('load', () => {
                     imageUpload.value = '';
                     filePreview.style.display = 'none';
                     fileLabel.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Choose an image to upload';
+                    uploadButton.disabled = true;
                     displayImages();
                 }
             );
         } catch (error) {
-            showToast('Failed to process image', 'error');
+            showToast('Failed to process image: ' + error.message, 'error');
             progressContainer.style.display = 'none';
             uploadButton.disabled = false;
         }
     });
 
-    if(closeModalBtn) closeModalBtn.addEventListener('click', () => { imageModal.style.display = 'none'; });
+    if (closeModalBtn) closeModalBtn.addEventListener('click', () => { imageModal.style.display = 'none'; });
     window.addEventListener('click', (e) => { if (e.target === imageModal) imageModal.style.display = 'none'; });
 });

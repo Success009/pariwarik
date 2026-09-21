@@ -147,66 +147,36 @@ function _performRenderItems() {
             card.style.animationDelay = (filtered.indexOf(item) * 0.05) + 's';
             if(isOut) card.style.opacity = '0.6';
 
+            const cleanName = item.name.replace(/\s+/g, '') + '.jpg';
+            const imgUrl = `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${cleanName}?alt=media`;
+            window.imageCache[item.id] = imgUrl;
+
             card.innerHTML = `
                 <div class="img-container">
-                    <div class="skeleton"></div>
-                    <img class="product-img" style="display:none;" alt="${item.name}">
+                    <div class="img-fallback"><i class="fas fa-utensils"></i></div>
+                    <img id="img-${item.id}" class="product-img" src="${imgUrl}" alt="${item.name}" loading="lazy" style="display:none; transition: opacity 0.4s;" onload="this.style.display='block'; if(this.previousElementSibling) this.previousElementSibling.style.display='none';" onerror="this.style.display='none'; if(this.previousElementSibling) this.previousElementSibling.style.display='flex';">
                     ${isOut ? '<div class="out-badge">Out of Stock</div>' : ''}
                     ${item.discountPercent && new Date(item.discountExpiry) > new Date() ? `<div class="discount-badge">-${item.discountPercent}%</div>` : ''}
                 </div>
                 <div class="card-body">
-                    <div class="card-header">
-                        <span class="rarity ${item.rarity ? item.rarity.toLowerCase() : 'basic'}">${item.rarity || 'Basic'}</span>
-                    </div>
-                    <h3 class="product-title">${item.name}</h3>
-                    <div class="product-meta">
-                        <span class="price">Rs ${price.toFixed(2)}</span>
-                        ${item.unit ? `<span class="unit">per ${item.startingValue || 1} ${item.unit}</span>` : ''}
-                    </div>
-                    <div class="product-actions">
-                        ${isOut ? `
-                            <button class="btn btn-secondary" disabled style="width:100%;">Unavailable</button>
-                        ` : `
-                            <div class="qty-selector" style="${cartItem ? 'display:flex;' : 'display:none;'}">
-                                <button class="qty-btn minus" onclick="updateCartQty('${item.id}', -1)">-</button>
-                                <span class="qty-val">${cartItem ? cartItem.qty : 1}</span>
-                                <button class="qty-btn plus" onclick="updateCartQty('${item.id}', 1)">+</button>
+                    <div class="p-name">${item.name}</div>
+                    <div class="p-price">Rs ${price.toFixed(2)}</div>
+                    <div class="p-unit">${item.unit ? 'per ' + (item.startingValue || 1) + ' ' + item.unit : ''}</div>
+                    <div id="ctrl-${item.id}" style="margin-top:auto;">
+                        ${cartItem ? `
+                            <div class="qty-controls">
+                                <button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button>
+                                <span style="font-weight:600;">${cartItem.qty}</span>
+                                <button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button>
                             </div>
-                            <button class="btn btn-primary add-to-cart" onclick="addToCart('${item.id}')" style="${cartItem ? 'display:none;' : 'display:block;'}">
-                                <i class="fas fa-plus"></i> Add
-                            </button>
+                        ` : `
+                            <button class="btn-add" ${isOut?'disabled':''} onclick="addToCart('${item.id}')">${isOut?'Sold Out':'Add to Order'}</button>
                         `}
                     </div>
                 </div>
             `;
 
             section.querySelector('.product-grid').appendChild(card);
-
-            const img = card.querySelector('.product-img');
-            const cleanName = item.name.replace(/\s+/g, '') + '.jpg';
-
-            if (window.imageCache[item.id]) {
-                if(img) {
-                    img.src = window.imageCache[item.id];
-                    img.style.display = 'block';
-                    img.previousElementSibling.style.display = 'none';
-                }
-            } else {
-                firebase.storage().ref('images/' + cleanName).getDownloadURL().then(url => {
-                    if(img) {
-                        img.src = url;
-                        img.style.display = 'block';
-                        img.previousElementSibling.style.display = 'none';
-                        window.imageCache[item.id] = url;
-                    }
-                }).catch(() => {
-                    if(img) {
-                        img.src = 'https://placehold.co/400x400?text=No+Image';
-                        img.style.display = 'block';
-                        img.previousElementSibling.style.display = 'none';
-                    }
-                });
-            }
         });
     });
 }

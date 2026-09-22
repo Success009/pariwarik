@@ -14,10 +14,53 @@ const _N = "table 1,table 2,table 3,table 4,hall 1,hall 2,hall 3,cabin 1,cabin 2
 
 let allItems = [ ], cart = [ ], orderType = 'local', tableNumber = 'General', _currentUser = null, categoryOrder = [ ];
 const imageCache = { };
+let storageFilesMap = null;
+
+function loadStorageImages() {
+    fetch('https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o?prefix=images/')
+        .then(res => res.json())
+        .then(data => {
+            if (data && Array.isArray(data.items)) {
+                storageFilesMap = new Map();
+                data.items.forEach(item => {
+                    const filename = (item.name || '').replace(/^images\//, '');
+                    if (!filename) return;
+                    const dot = filename.lastIndexOf('.');
+                    const base = (dot !== -1 ? filename.substring(0, dot) : filename).toLowerCase();
+                    storageFilesMap.set(base, filename);
+                    storageFilesMap.set(base.replace(/[^a-z0-9]/g, ''), filename);
+                });
+                if (allItems && allItems.length > 0) {
+                    renderItems();
+                }
+            }
+        })
+        .catch(err => console.warn('Could not preload storage files:', err));
+}
+
+function resolveItemImageUrl(item) {
+    if (!item || !item.name) return '';
+    const name = item.name;
+    const cleanNoSpaces = name.replace(/\s+/g, '');
+    let matchedFilename = cleanNoSpaces + '.jpg';
+
+    if (storageFilesMap) {
+        const key1 = cleanNoSpaces.toLowerCase();
+        const key2 = name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        if (storageFilesMap.has(key1)) {
+            matchedFilename = storageFilesMap.get(key1);
+        } else if (storageFilesMap.has(key2)) {
+            matchedFilename = storageFilesMap.get(key2);
+        }
+    }
+
+    return `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${encodeURIComponent(matchedFilename)}?alt=media`;
+}
 
 function initApp() {
     closeAll();
     localStorage.setItem('order_type', 'local');
+    loadStorageImages();
     const q = window.location.search.substring(1);
     if (q) {
         if (q.length === 16) {
@@ -188,15 +231,17 @@ function _performRenderItems() {
             card.style.animation = 'fadeUp 0.6s ease-out backwards';
             card.style.animationDelay = (filtered.indexOf(item) * 0.05) + 's';
             if (isOut) card.style.opacity = '0.6';
+            const imgUrl = resolveItemImageUrl(item);
+            imageCache[item.id] = imgUrl;
             card.innerHTML = `
                 <div class="img-container">
                     <div class="img-fallback"><i class="fas fa-utensils"></i></div>
-                    <img id="img-${item.id}" src="" style="display:none; transition: opacity 0.4s;" onerror="this.style.display='none'; this.previousElementSibling.style.display='flex';">
+                    <img id="img-${item.id}" src="${imgUrl}" style="display:none; transition: opacity 0.4s;" onload="this.style.display='block'; if(this.previousElementSibling) this.previousElementSibling.style.display='none';" onerror="this.style.display='none'; if(this.previousElementSibling) this.previousElementSibling.style.display='flex';">
                 </div>
                 <div class="card-body">
                     <div class="p-name">${item.name}</div>
                     <div class="p-price">Rs ${price.toFixed(2)}</div>
-                    <div class="p-unit">${item.unit ? 'per ' + item.unit : ''}</div>
+                    <div class="p-unit">${item.unit ? 'per ' + (item.startingValue || 1) + ' ' + item.unit : ''}</div>
                     <div id="ctrl-${item.id}" style="margin-top:auto;">
                         ${cartItem ? `
                             <div class="qty-controls">
@@ -210,28 +255,9 @@ function _performRenderItems() {
                     </div>
                 </div>`;
             section.querySelector('.product-grid').appendChild(card);
-            const cleanName = item.name.replace(/\s+/g, '') + '.jpg';
-            const img = document.getElementById(`img-${item.id}`);
-            if (imageCache[item.id]) {
-                if (img) {
-                    img.src = imageCache[item.id];
-                    img.style.display = 'block';
-                    img.previousElementSibling.style.display = 'none';
-                }
-            } else {
-                firebase.storage().ref('images/' + cleanName).getDownloadURL().then(url => {
-                    if (img) {
-                        img.src = url;
-                        img.style.display = 'block';
-                        img.previousElementSibling.style.display = 'none';
-                        imageCache[item.id] = url;
-                    }
-                }).catch(() => {});
-            }
         });
     });
 }
-
 function addToCart(id) {
     const item = allItems.find(i => i.id === id);
     let p = item.price;

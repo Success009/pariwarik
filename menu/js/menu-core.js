@@ -16,11 +16,53 @@ window.orderType = 'online';
 window.categoryOrder = [ ];
 window.imageCache = { };
 window._currentUser = null;
+window.storageFilesMap = null;
+
+function loadStorageImages() {
+    fetch('https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o?prefix=images/')
+        .then(res => res.json())
+        .then(data => {
+            if (data && Array.isArray(data.items)) {
+                window.storageFilesMap = new Map();
+                data.items.forEach(item => {
+                    const filename = (item.name || '').replace(/^images\//, '');
+                    if (!filename) return;
+                    const dot = filename.lastIndexOf('.');
+                    const base = (dot !== -1 ? filename.substring(0, dot) : filename).toLowerCase();
+                    window.storageFilesMap.set(base, filename);
+                    window.storageFilesMap.set(base.replace(/[^a-z0-9]/g, ''), filename);
+                });
+                if (window.allItems && window.allItems.length > 0) {
+                    renderItems();
+                }
+            }
+        })
+        .catch(err => console.warn('Could not preload storage files:', err));
+}
+
+function resolveItemImageUrl(item) {
+    if (!item || !item.name) return '';
+    const name = item.name;
+    const cleanNoSpaces = name.replace(/\s+/g, '');
+    let matchedFilename = cleanNoSpaces + '.jpg';
+
+    if (window.storageFilesMap) {
+        const key1 = cleanNoSpaces.toLowerCase();
+        const key2 = name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        if (window.storageFilesMap.has(key1)) {
+            matchedFilename = window.storageFilesMap.get(key1);
+        } else if (window.storageFilesMap.has(key2)) {
+            matchedFilename = window.storageFilesMap.get(key2);
+        }
+    }
+
+    return `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${encodeURIComponent(matchedFilename)}?alt=media`;
+}
 
 function initApp() {
     if (typeof closeAll === 'function') closeAll();
     localStorage.setItem('order_type', 'online');
-    
+    loadStorageImages();
     setTimeout(() => {
         const loader = document.getElementById('loader');
         if(loader) loader.style.display = 'none';
@@ -147,8 +189,7 @@ function _performRenderItems() {
             card.style.animationDelay = (filtered.indexOf(item) * 0.05) + 's';
             if(isOut) card.style.opacity = '0.6';
 
-            const cleanName = item.name.replace(/\s+/g, '') + '.jpg';
-            const imgUrl = `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${cleanName}?alt=media`;
+            const imgUrl = resolveItemImageUrl(item);
             window.imageCache[item.id] = imgUrl;
 
             card.innerHTML = `

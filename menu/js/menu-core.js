@@ -16,58 +16,36 @@ window.orderType = 'online';
 window.categoryOrder = [ ];
 window.imageCache = { };
 window._currentUser = null;
-window.storageFilesMap = null;
-
-function loadStorageImages() {
-    fetch('https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o?prefix=images/')
-        .then(res => res.json())
-        .then(data => {
-            if (data && Array.isArray(data.items)) {
-                window.storageFilesMap = new Map();
-                data.items.forEach(item => {
-                    const filename = (item.name || '').replace(/^images\//, '');
-                    if (!filename) return;
-                    const dot = filename.lastIndexOf('.');
-                    const base = (dot !== -1 ? filename.substring(0, dot) : filename).toLowerCase();
-                    window.storageFilesMap.set(base, filename);
-                    window.storageFilesMap.set(base.replace(/[^a-z0-9]/g, ''), filename);
-                });
-                if (window.allItems && window.allItems.length > 0) {
-                    renderItems();
-                }
-            }
-        })
-        .catch(err => console.warn('Could not preload storage files:', err));
+function getItemImageUrl(name) {
+    if (!name) return '';
+    const clean = name.replace(/\s+/g, '');
+    return `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${encodeURIComponent(clean)}.jpg?alt=media`;
 }
 
-function resolveItemImageUrl(item) {
-    if (!item || !item.name) return '';
-    const name = item.name;
-    const cleanNoSpaces = name.replace(/\s+/g, '');
-    let matchedFilename = cleanNoSpaces + '.jpg';
-
-    if (window.storageFilesMap) {
-        const key1 = cleanNoSpaces.toLowerCase();
-        const key2 = name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        if (window.storageFilesMap.has(key1)) {
-            matchedFilename = window.storageFilesMap.get(key1);
-        } else if (window.storageFilesMap.has(key2)) {
-            matchedFilename = window.storageFilesMap.get(key2);
+function handleImgError(img, cleanName) {
+    if (!img) return;
+    if (!img.dataset.retry) {
+        img.dataset.retry = "png";
+        img.src = `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${encodeURIComponent(cleanName)}.png?alt=media`;
+    } else if (img.dataset.retry === "png") {
+        img.dataset.retry = "lower";
+        img.src = `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${encodeURIComponent(cleanName.toLowerCase())}.jpg?alt=media`;
+    } else {
+        img.style.display = 'none';
+        if (img.previousElementSibling) {
+            img.previousElementSibling.style.display = 'flex';
         }
     }
-
-    return `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${encodeURIComponent(matchedFilename)}?alt=media`;
 }
+window.handleImgError = handleImgError;
 
 function initApp() {
     if (typeof closeAll === 'function') closeAll();
     localStorage.setItem('order_type', 'online');
-    loadStorageImages();
     setTimeout(() => {
         const loader = document.getElementById('loader');
         if(loader) loader.style.display = 'none';
     }, 1500);
-    
     try {
         if (!firebase.apps.length) firebase.initializeApp(window.fConfig);
         const auth = firebase.auth();
@@ -189,13 +167,14 @@ function _performRenderItems() {
             card.style.animationDelay = (filtered.indexOf(item) * 0.05) + 's';
             if(isOut) card.style.opacity = '0.6';
 
-            const imgUrl = resolveItemImageUrl(item);
+            const cleanName = item.name ? item.name.replace(/\s+/g, '') : '';
+            const imgUrl = getItemImageUrl(item.name);
             window.imageCache[item.id] = imgUrl;
 
             card.innerHTML = `
                 <div class="img-container">
                     <div class="img-fallback"><i class="fas fa-utensils"></i></div>
-                    <img id="img-${item.id}" class="product-img" src="${imgUrl}" alt="${item.name}" loading="lazy" style="display:none; transition: opacity 0.4s;" onload="this.style.display='block'; if(this.previousElementSibling) this.previousElementSibling.style.display='none';" onerror="this.style.display='none'; if(this.previousElementSibling) this.previousElementSibling.style.display='flex';">
+                    <img id="img-${item.id}" class="product-img" src="${imgUrl}" alt="${item.name}" loading="lazy" onload="if(this.previousElementSibling) this.previousElementSibling.style.display='none';" onerror="handleImgError(this, '${cleanName.replace(/'/g, "\\'")}')">
                     ${isOut ? '<div class="out-badge">Out of Stock</div>' : ''}
                     ${item.discountPercent && new Date(item.discountExpiry) > new Date() ? `<div class="discount-badge">-${item.discountPercent}%</div>` : ''}
                 </div>

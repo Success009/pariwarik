@@ -14,53 +14,32 @@ const _N = "table 1,table 2,table 3,table 4,hall 1,hall 2,hall 3,cabin 1,cabin 2
 
 let allItems = [ ], cart = [ ], orderType = 'local', tableNumber = 'General', _currentUser = null, categoryOrder = [ ];
 const imageCache = { };
-let storageFilesMap = null;
-
-function loadStorageImages() {
-    fetch('https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o?prefix=images/')
-        .then(res => res.json())
-        .then(data => {
-            if (data && Array.isArray(data.items)) {
-                storageFilesMap = new Map();
-                data.items.forEach(item => {
-                    const filename = (item.name || '').replace(/^images\//, '');
-                    if (!filename) return;
-                    const dot = filename.lastIndexOf('.');
-                    const base = (dot !== -1 ? filename.substring(0, dot) : filename).toLowerCase();
-                    storageFilesMap.set(base, filename);
-                    storageFilesMap.set(base.replace(/[^a-z0-9]/g, ''), filename);
-                });
-                if (allItems && allItems.length > 0) {
-                    renderItems();
-                }
-            }
-        })
-        .catch(err => console.warn('Could not preload storage files:', err));
+function getItemImageUrl(name) {
+    if (!name) return '';
+    const clean = name.replace(/\s+/g, '');
+    return `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${encodeURIComponent(clean)}.jpg?alt=media`;
 }
 
-function resolveItemImageUrl(item) {
-    if (!item || !item.name) return '';
-    const name = item.name;
-    const cleanNoSpaces = name.replace(/\s+/g, '');
-    let matchedFilename = cleanNoSpaces + '.jpg';
-
-    if (storageFilesMap) {
-        const key1 = cleanNoSpaces.toLowerCase();
-        const key2 = name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        if (storageFilesMap.has(key1)) {
-            matchedFilename = storageFilesMap.get(key1);
-        } else if (storageFilesMap.has(key2)) {
-            matchedFilename = storageFilesMap.get(key2);
+function handleImgError(img, cleanName) {
+    if (!img) return;
+    if (!img.dataset.retry) {
+        img.dataset.retry = "png";
+        img.src = `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${encodeURIComponent(cleanName)}.png?alt=media`;
+    } else if (img.dataset.retry === "png") {
+        img.dataset.retry = "lower";
+        img.src = `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${encodeURIComponent(cleanName.toLowerCase())}.jpg?alt=media`;
+    } else {
+        img.style.display = 'none';
+        if (img.previousElementSibling) {
+            img.previousElementSibling.style.display = 'flex';
         }
     }
-
-    return `https://firebasestorage.googleapis.com/v0/b/deep-freehold-389006.appspot.com/o/images%2F${encodeURIComponent(matchedFilename)}?alt=media`;
 }
+window.handleImgError = handleImgError;
 
 function initApp() {
     closeAll();
     localStorage.setItem('order_type', 'local');
-    loadStorageImages();
     const q = window.location.search.substring(1);
     if (q) {
         if (q.length === 16) {
@@ -231,12 +210,13 @@ function _performRenderItems() {
             card.style.animation = 'fadeUp 0.6s ease-out backwards';
             card.style.animationDelay = (filtered.indexOf(item) * 0.05) + 's';
             if (isOut) card.style.opacity = '0.6';
-            const imgUrl = resolveItemImageUrl(item);
+            const cleanName = item.name ? item.name.replace(/\s+/g, '') : '';
+            const imgUrl = getItemImageUrl(item.name);
             imageCache[item.id] = imgUrl;
             card.innerHTML = `
                 <div class="img-container">
                     <div class="img-fallback"><i class="fas fa-utensils"></i></div>
-                    <img id="img-${item.id}" src="${imgUrl}" style="display:none; transition: opacity 0.4s;" onload="this.style.display='block'; if(this.previousElementSibling) this.previousElementSibling.style.display='none';" onerror="this.style.display='none'; if(this.previousElementSibling) this.previousElementSibling.style.display='flex';">
+                    <img id="img-${item.id}" src="${imgUrl}" loading="lazy" onload="if(this.previousElementSibling) this.previousElementSibling.style.display='none';" onerror="handleImgError(this, '${cleanName.replace(/'/g, "\\'")}')">
                 </div>
                 <div class="card-body">
                     <div class="p-name">${item.name}</div>

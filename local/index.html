@@ -43,6 +43,17 @@
             <i class="fas fa-search"></i>
             <input type="text" id="searchInput" class="search-input" placeholder="Search for delicacies..." oninput="renderItems()">
         </div>
+        <div class="category-nav-wrapper">
+            <button type="button" class="cat-nav-btn cat-nav-prev" id="catNavPrev" onclick="scrollCategoryNav(-1)" aria-label="Previous categories">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="category-nav-scroll" id="categoryNav">
+                <!-- Category chips will be rendered here dynamically -->
+            </div>
+            <button type="button" class="cat-nav-btn cat-nav-next" id="catNavNext" onclick="scrollCategoryNav(1)" aria-label="Next categories">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
     </div>
 
     <main id="menuContent">

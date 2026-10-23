@@ -22,6 +22,16 @@ This directory contains the digital dining menu application for **Pariwarik Hote
 
 ---
 
+## Category Swipe & Tap Navigation
+
+To provide swift navigation without requiring customers to scroll through every section:
+1. **Swipeable Category Pills**: A horizontal bar (`#categoryNav`) positioned directly under the search container in the sticky navigation bar allows swiping from left to right across all categories.
+2. **Category Isolation & Tap View**: Tapping any category chip filters the menu view to only display items in that category, with an item count badge and a "View All" reset button.
+3. **Touch Swipe Gestures**: Swiping horizontally left or right on the menu items area automatically flips to the next or previous category.
+4. **Desktop Support**: Arrow navigation buttons (`#catNavPrev`, `#catNavNext`) and mouse drag-to-scroll support ensure smooth interaction on desktop browsers.
+
+---
+
 ## Checkout and Delivery Flow Details
 
 When a customer completes their order:

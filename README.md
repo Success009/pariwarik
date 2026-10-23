@@ -59,16 +59,24 @@ menu/
 ├── menu.css           # CSS entry-point (imports sub-stylesheets)
 ├── menu.js            # JS entry-point (preserves backward compatibility)
 ├── css/
-│   ├── menu-core.css  # Typography, skeleton loading, product grid, and modals
+│   ├── menu-core.css  # Typography, skeleton loading, product grid, category navigation bar, and modals
 │   ├── cart.css       # Bottom action bar and drawer-based shopping cart list
 │   └── order-flow.css # Form inputs, custom area selectors, and checkout buttons
 ├── js/
-│   ├── menu-core.js   # Firebase config, anonymous auth, DB listeners, search, and catalog rendering
+│   ├── menu-core.js   # Firebase config, anonymous auth, DB listeners, category swiping/filtering, search, and catalog rendering
 │   ├── cart.js        # Cart items adding/updating and drawer toggling
 │   └── order-flow.js  # Area check step, local storage synchronization, and order submissions
 └── tests/
     └── validate_menu.js # Automated testing suite validating structural integrity
 ```
+
+### Horizontal Category Swipe & Tap Navigation
+
+To provide a rapid browsing experience for customers without requiring them to scroll through every single section:
+1. **Swipeable Category Bar**: A sticky horizontal category bar situated directly below the search bar (`.category-nav-scroll`) allows customers to swipe left-to-right through all available categories with touch momentum or mouse drag.
+2. **Category Isolation & Tap View**: Tapping any category chip isolates and shows only the items in that category, complete with item counts and a quick "View All" reset.
+3. **Swipe Gestures on Menu**: Customers can also perform touch swipes on the menu items area to flip between categories intuitively.
+4. **Desktop Support**: Desktop users have responsive chevron scroll buttons (`catNavPrev`, `catNavNext`) as well as click-and-drag horizontal scrolling.
 
 ### The Delivery Location Flow
 

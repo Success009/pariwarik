@@ -4,16 +4,18 @@ Welcome to the **Pariwarik** codebase. This repository contains the public-facin
 
 > [!IMPORTANT]
 > **ATTENTION AGENTS AND DEVELOPERS:** 
-> Before writing any code or making modifications to this repository, you must read the source code thoroughly. Ensure you understand the shared dependencies and database configurations to prevent breaking existing features in production.
+> Before writing any code or making modifications to this repository, you must read **[`AGENT_INSTRUCTIONS.md`](AGENT_INSTRUCTIONS.md)**.
+> All contributors using AI coding agents (Google Antigravity, Gemini, BigFish, Cursor, etc.) must follow the guidelines: work on feature branches, never push directly to `main`, run the test suite, and open Pull Requests for review.
 
 ---
 
 ## Table of Contents
-1. [Core Repository Structure](#core-repository-structure)
-2. [Database Security Rules](#database-security-rules)
-3. [The Dining Menu Web Application (`/menu`)](#the-dining-menu-web-application-menu)
-4. [Instructions for AI Agents](#instructions-for-ai-agents)
-5. [Local Development and Testing](#local-development-and-testing)
+1. [AI Developer Agent Prompt & Instructions (`AGENT_INSTRUCTIONS.md`)](AGENT_INSTRUCTIONS.md)
+2. [Core Repository Structure](#core-repository-structure)
+3. [Database Security Rules](#database-security-rules)
+4. [The Dining Menu Web Application (`/menu`)](#the-dining-menu-web-application-menu)
+5. [Instructions for AI Agents](#instructions-for-ai-agents)
+6. [Local Development and Testing](#local-development-and-testing)
 
 ---
 
@@ -21,20 +23,20 @@ Welcome to the **Pariwarik** codebase. This repository contains the public-facin
 
 The project is structured as a collection of static web pages and modules, backed by Firebase services:
 
-*   [`/index.html`](file:///C:/Users/rahul/Desktop/pariwarik/index.html): The main hotel landing page showcasing accommodations, lodging amenities, dynamic scroll animations, and bookable stay options.
-*   [`/style.css`](file:///C:/Users/rahul/Desktop/pariwarik/style.css): Vanilla CSS styling stylesheet for the core landing page.
-*   [`/script.js`](file:///C:/Users/rahul/Desktop/pariwarik/script.js): General UI behavior for the main page (navbar collapse, smooth scrolling, etc.).
-*   [`/menu/`](file:///C:/Users/rahul/Desktop/pariwarik/menu/): The main dining menu application for digital food ordering.
-*   [`/local/`](file:///C:/Users/rahul/Desktop/pariwarik/local/): Local modules or assets folder.
-*   [`/plan/`](file:///C:/Users/rahul/Desktop/pariwarik/plan/): Planning materials or mockups.
-*   [`/database.rules.json`](file:///C:/Users/rahul/Desktop/pariwarik/database.rules.json): Realtime Database security rules configuration.
-*   [`/firebase.json`](file:///C:/Users/rahul/Desktop/pariwarik/firebase.json): Firebase CLI configuration.
+*   [`/index.html`](index.html): The main hotel landing page showcasing accommodations, lodging amenities, dynamic scroll animations, and bookable stay options.
+*   [`/style.css`](style.css): Vanilla CSS styling stylesheet for the core landing page.
+*   [`/script.js`](script.js): General UI behavior for the main page (navbar collapse, smooth scrolling, etc.).
+*   [`/menu/`](menu/): The main dining menu application for digital food ordering.
+*   [`/local/`](local/): Local modules or assets folder.
+*   [`/plan/`](plan/): Planning materials or mockups.
+*   [`/database.rules.json`](database.rules.json): Realtime Database security rules configuration.
+*   [`/firebase.json`](firebase.json): Firebase CLI configuration.
 
 ---
 
 ## Database Security Rules
 
-The application shares a Firebase Realtime Database (RTDB) instance (`deep-freehold-389006`) with several other apps. The rules are saved locally in [`database.rules.json`](file:///C:/Users/rahul/Desktop/pariwarik/database.rules.json).
+The application shares a Firebase Realtime Database (RTDB) instance (`deep-freehold-389006`) with several other apps. The rules are saved locally in [`database.rules.json`](database.rules.json).
 
 > [!WARNING]
 > Do NOT modify the security rules of other systems. The database rules secure:

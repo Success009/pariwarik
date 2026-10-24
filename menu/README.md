@@ -6,19 +6,19 @@ This directory contains the digital dining menu application for **Pariwarik Hote
 
 ## Directory Index
 
-*   [`index.html`](file:///C:/Users/rahul/Desktop/pariwarik/menu/index.html): Main page interface and sidebar sliding drawers for checkout steps.
-*   [`menu.css`](file:///C:/Users/rahul/Desktop/pariwarik/menu/menu.css): Stylesheet entry point mapping imports to modular CSS files.
-*   [`menu.js`](file:///C:/Users/rahul/Desktop/pariwarik/menu/menu.js): JS entry point implementing a backward-compatible dynamic script loader.
-*   [`css/`](file:///C:/Users/rahul/Desktop/pariwarik/menu/css/): Modular styles split by function:
-    *   [`menu-core.css`](file:///C:/Users/rahul/Desktop/pariwarik/menu/css/menu-core.css): Typography, loader, product grid, card layouts, and modal windows.
-    *   [`cart.css`](file:///C:/Users/rahul/Desktop/pariwarik/menu/css/cart.css): Floating bottom order bar and drawer shopping basket row styling.
-    *   [`order-flow.css`](file:///C:/Users/rahul/Desktop/pariwarik/menu/css/order-flow.css): Text inputs, final confirm button, and custom location selectors.
-*   [`js/`](file:///C:/Users/rahul/Desktop/pariwarik/menu/js/): Modular logic components:
-    *   [`menu-core.js`](file:///C:/Users/rahul/Desktop/pariwarik/menu/js/menu-core.js): Firebase setup, anonymous login, database catalog listeners, search, and menu card rendering.
-    *   [`cart.js`](file:///C:/Users/rahul/Desktop/pariwarik/menu/js/cart.js): Cart object mutation and slide drawer toggles.
-    *   [`order-flow.js`](file:///C:/Users/rahul/Desktop/pariwarik/menu/js/order-flow.js): Delivery details validation, custom area processing, local storage sync, and database order uploads.
-*   [`tests/`](file:///C:/Users/rahul/Desktop/pariwarik/menu/tests/): Automated test scripts:
-    *   [`validate_menu.js`](file:///C:/Users/rahul/Desktop/pariwarik/menu/tests/validate_menu.js): Checks integrity of code files, script inclusion tags, and area checkout logic.
+*   [`index.html`](index.html): Main page interface and sidebar sliding drawers for checkout steps.
+*   [`menu.css`](menu.css): Stylesheet entry point mapping imports to modular CSS files.
+*   [`menu.js`](menu.js): JS entry point implementing a backward-compatible dynamic script loader.
+*   [`css/`](css/): Modular styles split by function:
+    *   [`menu-core.css`](css/menu-core.css): Typography, loader, product grid, card layouts, and modal windows.
+    *   [`cart.css`](css/cart.css): Floating bottom order bar and drawer shopping basket row styling.
+    *   [`order-flow.css`](css/order-flow.css): Text inputs, final confirm button, and custom location selectors.
+*   [`js/`](js/): Modular logic components:
+    *   [`menu-core.js`](js/menu-core.js): Firebase setup, anonymous login, database catalog listeners, search, and menu card rendering.
+    *   [`cart.js`](js/cart.js): Cart object mutation and slide drawer toggles.
+    *   [`order-flow.js`](js/order-flow.js): Delivery details validation, custom area processing, local storage sync, and database order uploads.
+*   [`tests/`](tests/): Automated test scripts:
+    *   [`validate_menu.js`](tests/validate_menu.js): Checks integrity of code files, script inclusion tags, and area checkout logic.
 
 ---
 

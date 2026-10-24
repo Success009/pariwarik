@@ -1,158 +1,128 @@
-# Pariwarik System Architecture & AI Agent Execution Specification
+# AGENT PROTOCOL & SECTOR ARCHITECTURE SPECIFICATION
 
-> **DIRECTIVE FOR AI AGENTS (Google Antigravity, Gemini, BigFish, Cursor, Claude Code):**  
-> You are operating on the **authoritative Pariwarik repository**: `https://github.com/Success009/pariwarik`.  
-> Read this document completely before touching any files. You must respect sector boundaries, run automated integrity tests, work strictly on isolated feature branches, and submit Pull Requests for review.
-
----
-
-## 1. Ground Rules & Setup for the Agent
-
-### Step 1: Abandon Stale Forks & Pull Fresh from Upstream
-If you were previously working in another fork or stale repository (e.g., `1lyrahul/pari_warik`), **abandon that directory**.  
-Clone or fetch directly from the official upstream repository:
-```bash
-git clone https://github.com/Success009/pariwarik.git
-cd pariwarik
-git checkout main
-git pull origin main
-```
-
-### Step 2: Work on a Feature Branch (Main is Protected)
-The `main` branch is protected by repository rules. Any direct push to `main` will be rejected by GitHub.  
-You must always work in an isolated feature branch:
-```bash
-git checkout -b feature/<descriptive-name>
-```
+> **AGENT INGESTION NOTICE:**  
+> This file is the primary system operating directive for autonomous coding agents (Google Antigravity, Gemini CLI, BigFish CLI, Cursor, Claude Code) working on this codebase.  
+> Read and execute the protocols below strictly in order.
 
 ---
 
-## 2. Application Sector Map & Isolation Boundaries
+## PROTOCOL 1: ENVIRONMENT & UPSTREAM SYNCHRONIZATION (MANDATORY)
 
-This application is divided into independent, decoupled sectors. **A change in one sector must NEVER break or contaminate other sectors.**
+Before inspecting code or accepting user tasks, you must ensure you are not operating on a stale fork or detached branch:
 
-```
-                                [ Pariwarik Codebase ]
-                                           │
-         ┌──────────────────┬──────────────┴───────────────┬──────────────────┐
-         │                  │                              │                  │
-    [Sector 1]         [Sector 2]                     [Sector 3]         [Sector 4]
-   Landing Page       Online Menu                   In-House Menu      Admin & Staff
-  (Accommodations)    (Customer Web App)             (Room/Table)     (Management Hub)
-   /index.html         /menu/                         /local/           /menu/admin/
-         │                  │                              │                  │
-         └──────────────────┼──────────────────────────────┴──────────────────┘
-                            │
-                       [Sector 5]
-              Shared Multi-Tenant RTDB
-             (deep-freehold-389006)
-            * NEVER touch /school or /bb_* *
-                            │
-                       [Sector 6]
-              Automated Testing Suite
-             (menu/tests/validate_menu.js)
-```
-
----
-
-### Sector 1: Hotel Accommodations & Landing Page (`/` Root)
-- **Path**: `index.html`, `style.css`, `script.js`, `images/`
-- **Scope**: Hotel branding, room booking inquiries, lodging amenities, location map, and contact channels.
-- **Isolation Rule**: Completely decoupled from dining ordering logic. Never import menu scripts or modify menu Firebase listeners inside the landing page sector.
-
-### Sector 2: Customer Online Dining & Delivery Menu (`/menu`)
-- **Path**: `menu/index.html`, `menu/menu.css`, `menu/menu.js`, `menu/css/`, `menu/js/`
-  - `menu/js/menu-core.js` & `menu/css/menu-core.css`: Catalog rendering, search, category swiping navigation, anonymous Firebase auth.
-  - `menu/js/cart.js` & `menu/css/cart.css`: Cart mutations, item counter badges, and checkout drawer.
-  - `menu/js/order-flow.js` & `menu/css/order-flow.css`: Customer contact form, delivery area selector (`Chaubiskothi Area`, `CMC Area`, `Somewhere Else`), and partner app handoff.
-- **Isolation Rule**:
-  - Uses modular CSS/JS files.
-  - Delivery contracts must be preserved: Key `pariwarik_order` and `pariwarik_cart` in `localStorage` are parsed by the external partner app (**Bharatpur Bazar**) when "Somewhere Else" is selected. Never change these key names.
-
-### Sector 3: In-House Dining & Room Service Menu (`/local`)
-- **Path**: `local/index.html`, `local/menu.css`, `local/menu.js`
-- **Scope**: Internal dining interface for seated dining and hotel room service orders.
-- **Isolation Rule**:
-  - Standalone single-bundle architecture (`local/menu.js` + `local/menu.css`).
-  - When introducing global UI features (e.g. category pills, search behaviors), synchronize them between Sector 2 (`menu/`) and Sector 3 (`local/`) while preserving their distinct checkout flows.
-
-### Sector 4: Staff Operations & Admin Portal (`/menu/admin`)
-- **Path**: `menu/admin/`
-  - `Dashboard.html` & `dashboard.js`: Live metrics, revenue calculations, active order monitoring, discount logs.
-  - `StaffOrder.html` & `orders.js`: Active incoming orders management.
-  - `StaffManualOrder.html` & `manual-order.js`: Table/room walk-in manual order placement.
-  - `StaffCredits.html` & `credits.js`: Customer credit ledger and repayment settlements.
-  - `StaffMenu.html` & `menu.js`: Live catalog pricing updates and in/out-of-stock toggles.
-  - `StaffUpload.html` & `upload.js`: New dish creation with image uploads.
-- **Isolation Rule**: Admin operations require staff authentication. Changes to customer menus in Sector 2 or 3 must NEVER break schema compatibility with the Admin order cards.
-
-### Sector 5: Multi-Tenant Database Boundary (`database.rules.json`)
-- **Database**: Firebase Realtime Database `deep-freehold-389006`
-- **CRITICAL MULTI-TENANT ISOLATION RULES**:
-  - This single database instance is shared across three independent projects:
-    1. **Udayashree School App** (`/school`)
-    2. **Bharatpur Bazar App** (`/bb_orders`, `/bb_users`, `/bb_*`)
-    3. **Pariwarik Hotel App** (`/menu`, `/orders`, `/users`, `/admins`, `/totalorders`, `/credits`)
-  - **STRICT PROHIBITION**: AI Agents are strictly forbidden from modifying, querying, deleting, or altering rules for `/school` or any `/bb_*` paths. Only touch `/menu`, `/orders`, `/users`, `/admins`, `/totalorders`, or `/credits`.
-
-### Sector 6: Automated Testing & Verification (`menu/tests`)
-- **Test Runner**: `menu/tests/validate_menu.js`
-- **Scope**: Structural integrity, script inclusion checks, JavaScript syntax verification, delivery location handler validation.
-- **Execution**:
-  ```bash
-  node menu/tests/validate_menu.js
-  ```
-- **Rule**: All tests MUST pass before pushing changes.
-
----
-
-## 3. Strict Coding & Asset Rules
-
-1. **Asset Cache Busting**:
-   Whenever you edit any CSS or JS file, you MUST bump the cache-busting query parameter in `menu/index.html` and `local/index.html`:
-   ```html
-   <!-- Example: Incrementing version tag -->
-   <link rel="stylesheet" href="menu.css?v=4.2">
-   <script src="js/menu-core.js?v=4.2"></script>
+1. **Abandon Stale Clones / Forks**: If you are in a fork (such as `1lyrahul/pari_warik`) or an out-of-sync local tree, abandon that state immediately.
+2. **Sync from Official Upstream**:
+   ```bash
+   git remote set-url origin https://github.com/Success009/pariwarik.git 2>/dev/null || git clone https://github.com/Success009/pariwarik.git
+   git fetch origin main
+   git checkout main
+   git pull origin main
+   ```
+3. **Mandatory Feature Branch Creation**:
+   The `main` branch has branch protection enabled. You are **strictly forbidden from committing or pushing directly to `main`**.
+   You must immediately branch off:
+   ```bash
+   git checkout -b feature/<task-or-feature-name>
    ```
 
-2. **Image Hierarchy & Rendering**:
-   - Always load food dish images using `getItemImageUrl(item.name)`.
-   - Ensure the image layer sits cleanly in front of the placeholder icon:
-     * `.img-container img` MUST have `z-index: 1;`
-     * `.img-fallback` MUST have `z-index: 0;`
+---
 
-3. **No Unauthenticated DB Calls**:
-   Anonymous Firebase authentication must succeed before any database query is dispatched.
+## PROTOCOL 2: APPLICATION SECTOR ISOLATION MATRIX
+
+The codebase is partitioned into distinct, decoupled operational sectors.  
+**RULE OF SECTOR ENCAPSULATION**: When the user requests a feature or modification, you must determine which sector it belongs to. Modify **ONLY** files inside that target sector. Do **NOT** bleed changes, mutate shared globals, or edit files in unrelated sectors.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       PARIWARIK APPLICATION SECTOR MAP                      │
+├────────────────────┬────────────────────┬─────────────────┬─────────────────┤
+│ SECTOR 1           │ SECTOR 2           │ SECTOR 3        │ SECTOR 4        │
+│ Landing Page       │ Online Menu (Web)  │ In-House Menu   │ Staff & Admin   │
+│ Path: /            │ Path: /menu/       │ Path: /local/   │ Path: /menu/admin│
+├────────────────────┴────────────────────┴─────────────────┴─────────────────┤
+│ SECTOR 5: Shared Multi-Tenant Database (Path: database.rules.json)          │
+│ * Multi-app RTDB (deep-freehold-389006). NEVER touch /school or /bb_* nodes! │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ SECTOR 6: Automated Integrity Test Harness (Path: menu/tests/validate_menu.js│
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Detailed Sector Boundaries:
+
+- **Sector 1: Landing Page & Accommodations (`/`)**
+  - **Targets**: `index.html`, `style.css`, `script.js`, `images/`
+  - **Function**: Public hotel landing page, rooms, amenities, and contact information.
+  - **Boundary**: Completely independent from dining/ordering logic. Do not import menu modules here.
+
+- **Sector 2: Customer Online Dining & Delivery Menu (`/menu/`)**
+  - **Targets**: `menu/index.html`, `menu/css/` (`menu-core.css`, `cart.css`, `order-flow.css`), `menu/js/` (`menu-core.js`, `cart.js`, `order-flow.js`)
+  - **Function**: Customer ordering, category filter & swipe navigation, cart calculation, delivery area selection.
+  - **Boundary**: Modular structure. Must maintain `localStorage` handoff keys (`pariwarik_order`, `pariwarik_cart`) for the external partner app (**Bharatpur Bazar**) when "Somewhere Else" is chosen.
+
+- **Sector 3: In-House Dining / Room Service Menu (`/local/`)**
+  - **Targets**: `local/index.html`, `local/menu.css`, `local/menu.js`
+  - **Function**: Local table and room service ordering menu.
+  - **Boundary**: Single-bundle architecture. If you introduce reusable menu UI components (e.g. category pills, search behaviors), synchronize them intentionally with Sector 2 while keeping the local ordering flow intact.
+
+- **Sector 4: Staff Operations & Admin Portal (`/menu/admin/`)**
+  - **Targets**: `Dashboard.html`, `StaffOrder.html`, `StaffManualOrder.html`, `StaffCredits.html`, `StaffMenu.html`, `StaffUpload.html`, `ImportProgram.html` and their respective `.js` scripts.
+  - **Function**: Kitchen order fulfillment, billing discounts, table walk-in orders, inventory toggles, and customer credit settlements.
+  - **Boundary**: Requires authentication. Never modify public order object shapes without ensuring admin dashboard parser compatibility.
+
+- **Sector 5: Multi-Tenant Database Boundaries (`database.rules.json`)**
+  - **Instance**: Firebase Realtime Database `deep-freehold-389006`
+  - **STRICT PROHIBITION**: This database is multi-tenant and shared with:
+    1. Udayashree School App (`/school`)
+    2. Bharatpur Bazar App (`/bb_orders`, `/bb_users`, `/bb_*`)
+    3. Pariwarik App (`/menu`, `/orders`, `/users`, `/admins`, `/totalorders`, `/credits`)
+    **NEVER touch, query, modify, or delete database keys outside Pariwarik's designated paths.**
+
+- **Sector 6: Automated Integrity Test Harness (`menu/tests/`)**
+  - **Target**: `menu/tests/validate_menu.js`
+  - **Function**: Validates structural file existence, JS syntax, script references, area selection handlers, and storage sync contracts.
 
 ---
 
-## 4. End-to-End Pull Request Workflow for the Agent
+## PROTOCOL 3: ASSET & RUNTIME INTEGRITY RULES
 
-When a feature or bug fix is requested:
+1. **Mandatory Cache-Busting**:
+   Whenever you edit CSS or JS in Sector 2 or Sector 3, you **must increment the version query string in the respective HTML files** (`menu/index.html` and `local/index.html`), e.g. from `?v=4.1` to `?v=4.2`. Browsers aggressively cache these files.
+2. **Image Hierarchy**:
+   Food images must load through `getItemImageUrl(name)` with `.img-container img` styled at `z-index: 1;` and `.img-fallback` styled at `z-index: 0;`.
+3. **Anonymous Auth First**:
+   Always confirm Firebase anonymous auth has initialized before querying the Realtime Database.
+
+---
+
+## PROTOCOL 4: AUTOMATED VERIFICATION (TEST GATEWAY)
+
+Before committing any files or opening a PR, you must run the local verification suite:
 
 ```bash
-# 1. Ensure you are on a fresh feature branch from latest main
-git checkout main
-git pull origin main
-git checkout -b feature/<feature-name>
-
-# 2. Make changes strictly within the assigned Sector
-# (Apply cache buster bumps if CSS/JS changed)
-
-# 3. Validate syntax across all JS files
-for f in $(find . -name "*.js" -not -path "*/node_modules/*"); do node -c "$f"; done
-
-# 4. Run the automated integrity test suite
+# 1. Structural and functional test runner
 node menu/tests/validate_menu.js
 
-# 5. Commit with a concise summary
-git add .
-git commit -m "Implement <feature-name> in Sector X"
-
-# 6. Push the feature branch to origin
-git push -u origin feature/<feature-name>
-
-# 7. Create a Pull Request targeting 'main'
-# The owner (@Success009) will review the PR, test it, and merge it with 1 click.
+# 2. Syntax verification across all scripts
+for f in $(find . -name "*.js" -not -path "*/node_modules/*"); do node -c "$f"; done
 ```
+*If any test fails or produces a syntax error, resolve it within the target sector before proceeding.*
+
+---
+
+## PROTOCOL 5: PUSH & PULL REQUEST DISPATCH
+
+Once code is implemented and all tests pass:
+
+1. **Commit Changes**:
+   ```bash
+   git add <modified-sector-files>
+   git commit -m "Implement <feature-description> in Sector <X>"
+   ```
+2. **Push to Feature Branch**:
+   ```bash
+   git push -u origin feature/<task-or-feature-name>
+   ```
+3. **Dispatch Pull Request**:
+   Create a Pull Request on GitHub targeting `main`.  
+   Output the Pull Request URL clearly to the user.  
+   The repository owner (`@Success009`) will review, verify the diff, and merge the branch into `main`.

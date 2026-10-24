@@ -319,7 +319,8 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem 120px; }
 .card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
 
 .img-container { padding-top: 85%; background: #f9f9f9; position: relative; overflow: hidden; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
-.img-container img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s ease; }
+.img-container img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s ease; z-index: 1; }
+.img-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #f0f2f5; color: #b0bec5; font-size: 2.2rem; z-index: 0; }
 .card:hover .img-container img { transform: scale(1.1); }
 
 .card-body { padding: 1.5rem; flex: 1; display: flex; flex-direction: column; text-align: center; }

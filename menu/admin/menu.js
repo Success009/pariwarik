@@ -289,6 +289,7 @@ function performCategoryRename() {
 
 function renderReorderList() {
     const list = document.getElementById('reorderList');
+    if (!list) return;
     const cats = Array.from(categories).sort((a, b) => {
         const order = Array.isArray(categoryOrder) ? categoryOrder : [];
         const getIndex = (cat) => {
@@ -306,20 +307,55 @@ function renderReorderList() {
 
     list.innerHTML = cats.map(cat => `
         <li class="reorder-item" draggable="true" data-cat="${cat}">
-            <i class="fas fa-grip-lines" style="color: #ccc;"></i>
-            <span style="font-weight: 600;">${cat}</span>
+            <div class="reorder-item-left">
+                <i class="fas fa-grip-lines" style="color: #ccc; cursor: grab;"></i>
+                <span>${cat}</span>
+            </div>
+            <div class="reorder-btns">
+                <button type="button" class="btn-reorder-move" onclick="moveCategoryItem(this, -1)" title="Move up">
+                    <i class="fas fa-chevron-up"></i>
+                </button>
+                <button type="button" class="btn-reorder-move" onclick="moveCategoryItem(this, 1)" title="Move down">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
         </li>
     `).join('');
 
     setupDragAndDrop();
 }
 
+function moveCategoryItem(btn, direction) {
+    const item = btn.closest('.reorder-item');
+    if (!item) return;
+    const list = item.parentElement;
+    if (!list) return;
+
+    if (direction === -1) {
+        const prev = item.previousElementSibling;
+        if (prev) {
+            list.insertBefore(item, prev);
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    } else if (direction === 1) {
+        const next = item.nextElementSibling;
+        if (next) {
+            list.insertBefore(next, item);
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+}
+
 function setupDragAndDrop() {
     const list = document.getElementById('reorderList');
+    if (!list) return;
     const items = list.querySelectorAll('.reorder-item');
 
     items.forEach(item => {
-        item.addEventListener('dragstart', () => {
+        item.addEventListener('dragstart', (e) => {
+            if (e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'move';
+            }
             setTimeout(() => item.classList.add('dragging'), 0);
         });
 
@@ -330,12 +366,17 @@ function setupDragAndDrop() {
 
     list.addEventListener('dragover', e => {
         e.preventDefault();
+        if (e.dataTransfer) {
+            e.dataTransfer.dropEffect = 'move';
+        }
         const draggingItem = list.querySelector('.dragging');
+        if (!draggingItem) return;
         const siblings = [...list.querySelectorAll('.reorder-item:not(.dragging)')];
         const nextSibling = siblings.find(sibling => {
-            return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2;
+            const rect = sibling.getBoundingClientRect();
+            return e.clientY <= rect.top + rect.height / 2;
         });
-        list.insertBefore(draggingItem, nextSibling);
+        list.insertBefore(draggingItem, nextSibling || null);
     });
 }
 

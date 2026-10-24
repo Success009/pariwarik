@@ -34,12 +34,34 @@
         .card-actions { display: flex; gap: 8px; padding-top: 1rem; border-top: 1px solid #f0f2f5; }
         .card-actions .btn { flex: 1; padding: 10px 12px; font-size: 0.85rem; }
         
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-        .modal-content { background: var(--white); width: 90%; max-width: 500px; border-radius: var(--radius-lg); padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.2); animation: modalSlide 0.3s ease-out; }
+        .modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.5); 
+            z-index: 2000; 
+            justify-content: center; 
+            align-items: center; 
+            backdrop-filter: blur(4px);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .modal-content { 
+            background: var(--white); 
+            width: 100%; 
+            max-width: 500px; 
+            max-height: 90vh; 
+            border-radius: var(--radius-lg); 
+            padding: 2rem; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2); 
+            animation: modalSlide 0.3s ease-out; 
+            overflow-y: auto;
+        }
         @keyframes modalSlide { from { transform: translateY(20px); opacity: 0; } }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-shrink: 0; }
         .modal-header h2 { font-size: 1.5rem; font-weight: 800; }
-        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray); }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray); transition: color 0.2s; }
+        .close-btn:hover { color: var(--danger); }
         .form-group { margin-bottom: 1.25rem; }
         .form-label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.85rem; color: var(--gray); text-transform: uppercase; }
         .form-control { width: 100%; padding: 12px; border: 2px solid #e0e6ed; border-radius: var(--radius-md); transition: var(--transition); }
@@ -137,16 +159,16 @@
 
     <!-- Reorder Modal -->
     <div id="reorderModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content reorder-modal-content">
             <div class="modal-header">
                 <h2>Rearrange Categories</h2>
                 <button class="close-btn" onclick="closeModal('reorderModal')">×</button>
             </div>
-            <p style="font-size: 0.85rem; color: var(--gray); margin-bottom: 1rem;">Drag categories to reorder them.</p>
-            <ul id="reorderList" style="list-style: none; padding: 0; margin-bottom: 1.5rem;">
+            <p class="reorder-intro">Drag categories or use arrows to reorder them.</p>
+            <ul id="reorderList">
                 <!-- Categories will be injected here -->
             </ul>
-            <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 10px;">
+            <div class="form-actions reorder-actions">
                 <button class="btn" style="background: #eee;" onclick="closeModal('reorderModal')">Cancel</button>
                 <button class="btn btn-primary" onclick="saveCategoryOrder()">Save Order</button>
             </div>
@@ -154,20 +176,114 @@
     </div>
 
     <style>
+        .reorder-modal-content {
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden !important;
+        }
+        .reorder-intro {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-bottom: 1rem;
+            flex-shrink: 0;
+        }
+        #reorderList {
+            list-style: none;
+            padding: 4px 2px;
+            margin-bottom: 1rem;
+            max-height: 52vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            flex: 1;
+            padding-right: 6px;
+        }
+        #reorderList::-webkit-scrollbar {
+            width: 6px;
+        }
+        #reorderList::-webkit-scrollbar-track {
+            background: #f1f3f5;
+            border-radius: 10px;
+        }
+        #reorderList::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        #reorderList::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .reorder-actions {
+            flex-shrink: 0;
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid #f0f2f5;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
         .reorder-item {
-            padding: 12px 15px;
+            padding: 10px 14px;
             background: #f8f9fa;
             border: 1px solid #e0e6ed;
             border-radius: 8px;
             margin-bottom: 8px;
-            cursor: move;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .reorder-item:hover { 
+            background: #fff; 
+            border-color: var(--primary); 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .reorder-item.dragging { 
+            opacity: 0.5; 
+            background: #eef2ff; 
+            border: 2px dashed var(--primary);
+            cursor: grabbing;
+        }
+        .reorder-item-left {
             display: flex;
             align-items: center;
             gap: 12px;
-            transition: 0.2s;
+            flex: 1;
+            min-width: 0;
         }
-        .reorder-item:hover { background: #fff; border-color: var(--primary); }
-        .reorder-item.dragging { opacity: 0.5; background: var(--primary-light); }
+        .reorder-item-left span {
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .reorder-btns {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .btn-reorder-move {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: 1px solid #e0e6ed;
+            background: white;
+            color: var(--dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+        .btn-reorder-move:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
     </style>
 
     <!-- Category Modal -->
